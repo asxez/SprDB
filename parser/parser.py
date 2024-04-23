@@ -7,6 +7,8 @@
 
 from enum import Enum, auto
 
+from common import log
+
 
 class TokenType(Enum):
     """枚举token类型"""
@@ -39,6 +41,7 @@ class TokenType(Enum):
     TOKEN_STAR = auto()  # *
     TOKEN_EQUAL = auto()  # =
     TOKEN_END = auto()  # ;
+    TOKEN_QUO = auto()  # '
 
     TOKEN_NUM = auto()  # 数字类型
     TOKEN_STRING = auto()  # 字符串类型
@@ -84,32 +87,28 @@ keywordsToken: list[KeywordsToken] = [
 ]
 
 
-class Parser:
+class LexParser:
     """词法分析器"""
 
-    def __init__(self):
+    def __init__(self, statement: str):
         self.curToken: Token = Token(TokenType.TOKEN_END)  # 当前token
         self.preToken: Token = Token(TokenType.TOKEN_END)  # 前一个token
-        self.sourceCode: str = ''  # 源码串
-        self.curPosition: int = 0  # 当前所在源码串位置
+        self.__sourceCode: str = statement  # 源码串
+        self.__curPosition: int = 0  # 当前所在源码串位置
 
-    def parse(self, statement: str):
-        """解析"""
-        self.sourceCode = statement
-        self.getNextToken()
-
-    def skipBlanks(self):
+    def __skipBlanks(self) -> None:
         """跳过空白"""
-        while self.curPosition < len(self.sourceCode) and self.sourceCode[self.curPosition].isspace():
-            self.curPosition += 1
+        while self.__curPosition < len(self.__sourceCode) and self.__sourceCode[self.__curPosition].isspace():
+            self.__curPosition += 1
 
-    def parseID(self):
-        if self.sourceCode[self.curPosition].isalpha():
+    def __parseAnother(self) -> None:
+        if self.__sourceCode[self.__curPosition].isalnum() or self.__sourceCode[self.__curPosition] == '_':
             # 识别关键字或者标识符
             identifier = ''
-            while self.curPosition < len(self.sourceCode) and self.sourceCode[self.curPosition].isalnum():
-                identifier += self.sourceCode[self.curPosition]
-                self.curPosition += 1
+            while self.__curPosition < len(self.__sourceCode) and (
+                    self.__sourceCode[self.__curPosition].isalnum() or self.__sourceCode[self.__curPosition] == '_'):
+                identifier += self.__sourceCode[self.__curPosition]
+                self.__curPosition += 1
             for keywordToken in keywordsToken:
                 if keywordToken.keyword.upper() == identifier.upper():
                     self.curToken.tokenType = keywordToken.tokenType
@@ -120,101 +119,126 @@ class Parser:
                 self.curToken.length = len(identifier)
                 self.curToken.value = identifier
 
-        elif self.sourceCode[self.curPosition].isdigit():
+        elif self.__sourceCode[self.__curPosition].isdigit():
             # 识别数字
             num = ''
-            while self.curPosition < len(self.sourceCode) and self.sourceCode[self.curPosition].isdigit():
-                num += self.sourceCode[self.curPosition]
-                self.curPosition += 1
+            while self.__curPosition < len(self.__sourceCode) and self.__sourceCode[self.__curPosition].isdigit():
+                num += self.__sourceCode[self.__curPosition]
+                self.__curPosition += 1
             self.curToken.tokenType = TokenType.TOKEN_NUM
             self.curToken.length = len(num)
             self.curToken.value = num
 
-    def getNextToken(self):
+        elif self.__sourceCode[self.__curPosition] == "'":
+            self.__curPosition += 1  # 跳过当前的"'"
+            # 识别字符串
+            string = ''
+            while self.__curPosition < len(self.__sourceCode):
+                if self.__sourceCode[self.__curPosition] == "'":
+                    if self.__curPosition + 1 < len(self.__sourceCode) and self.__sourceCode[self.__curPosition + 1] == "'":
+                        # 此时是一个转义字符
+                        string += "'"
+                        self.__curPosition += 2
+                        continue
+                    else:  # 继续读入
+                        self.__curPosition += 1
+                        break
+                string += self.__sourceCode[self.__curPosition]
+                self.__curPosition += 1
+            else:
+                # 命令结束而字符串仍未结果，抛出syntax error
+                log.error("Unterminated string.", 'syntax error')
+            self.curToken.tokenType = TokenType.TOKEN_STRING
+            self.curToken.length = len(string)
+            self.curToken.value = string
+
+        else:
+            log.error(f"an error occurred while parsing the token.", 'parse error')
+
+    def getNextToken(self) -> None:
         """获取下一个token"""
         self.preToken = self.curToken
-        self.skipBlanks()
+        self.__skipBlanks()
         self.curToken = Token(TokenType.TOKEN_END)
-        while self.curPosition < len(self.sourceCode) and self.sourceCode[self.curPosition] != ';':
-            match self.sourceCode[self.curPosition]:
+        while self.__curPosition < len(self.__sourceCode) and self.__sourceCode[self.__curPosition] != ';':
+            match self.__sourceCode[self.__curPosition]:
                 case ',':
                     self.curToken.tokenType = TokenType.TOKEN_COMMA
                     self.curToken.length = 1
                     self.curToken.value = ','
-                    self.curPosition += 1
+                    self.__curPosition += 1
                     break
                 case '.':
                     self.curToken.tokenType = TokenType.TOKEN_DOT
                     self.curToken.length = 1
                     self.curToken.value = '.'
-                    self.curPosition += 1
+                    self.__curPosition += 1
                     break
                 case '>':
-                    if self.sourceCode[self.curPosition + 1] == '=':
+                    if self.__sourceCode[self.__curPosition + 1] == '=':
                         self.curToken.tokenType = TokenType.TOKEN_MORE_EQUAL
                         self.curToken.length = 2
                         self.curToken.value = '>='
-                        self.curPosition += 2
+                        self.__curPosition += 2
                     else:
                         self.curToken.tokenType = TokenType.TOKEN_MORE
                         self.curToken.length = 1
                         self.curToken.value = '>'
-                        self.curPosition += 1
+                        self.__curPosition += 1
                     break
                 case '<':
-                    if self.sourceCode[self.curPosition + 1] == '=':
+                    if self.__sourceCode[self.__curPosition + 1] == '=':
                         self.curToken.tokenType = TokenType.TOKEN_LESS_EQUAL
                         self.curToken.length = 2
                         self.curToken.value = '<='
-                        self.curPosition += 2
+                        self.__curPosition += 2
                     else:
                         self.curToken.tokenType = TokenType.TOKEN_LESS
                         self.curToken.length = 1
                         self.curToken.value = '<'
-                        self.curPosition += 1
+                        self.__curPosition += 1
                     break
                 case '(':
                     self.curToken.tokenType = TokenType.TOKEN_LEFT_PAREN
                     self.curToken.length = 1
                     self.curToken.value = '('
-                    self.curPosition += 1
+                    self.__curPosition += 1
                     break
                 case ')':
                     self.curToken.tokenType = TokenType.TOKEN_RIGHT_PAREN
                     self.curToken.length = 1
                     self.curToken.value = ')'
-                    self.curPosition += 1
+                    self.__curPosition += 1
                     break
                 case '*':
                     self.curToken.tokenType = TokenType.TOKEN_STAR
                     self.curToken.length = 1
                     self.curToken.value = '*'
-                    self.curPosition += 1
+                    self.__curPosition += 1
                     break
                 case '=':
                     self.curToken.tokenType = TokenType.TOKEN_EQUAL
                     self.curToken.length = 1
                     self.curToken.value = '='
-                    self.curPosition += 1
+                    self.__curPosition += 1
                     break
                 case ';':
                     self.curToken.tokenType = TokenType.TOKEN_END
                     self.curToken.length = 1
                     self.curToken.value = ';'
-                    self.curPosition += 1
+                    self.__curPosition += 1
                     break
                 case _:
-                    self.parseID()
+                    self.__parseAnother()
                     break
-
-        if self.curPosition > len(self.sourceCode):
-            # 如果已经到达源代码的末尾，设置当前 token 为结束标志
-            self.curToken.tokenType = TokenType.TOKEN_END
 
 
 if __name__ == '__main__':
-    parser = Parser()
-    parser.parse("update test set col=1 where a = 1")
+    parser = LexParser("""UPDATE table_name
+SET column1 = value1, column2 = value2, ...
+WHERE condition;
+""")
+    parser.getNextToken()
     while parser.curToken.tokenType != TokenType.TOKEN_END:
         print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
         parser.getNextToken()
