@@ -7,8 +7,6 @@
 
 from enum import Enum, auto
 
-from common.log import error
-
 
 class TokenType(Enum):
     """枚举token类型"""
@@ -87,6 +85,7 @@ keywordsToken: list[KeywordsToken] = [
 
 
 class Parser:
+    """词法分析器"""
 
     def __init__(self):
         self.curToken: Token = Token(TokenType.TOKEN_END)  # 当前token
@@ -211,8 +210,6 @@ class Parser:
         if self.curPosition > len(self.sourceCode):
             # 如果已经到达源代码的末尾，设置当前 token 为结束标志
             self.curToken.tokenType = TokenType.TOKEN_END
-
-        error("the curPosition is more than length of sourceCode.")
 
 
 if __name__ == '__main__':
