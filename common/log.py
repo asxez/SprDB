@@ -18,7 +18,7 @@ def warning(warningMessage=''):
     row = stack.lineno
     # 输出黄色文本
     print(
-        f"\033[93mWarning:\033[3m  \033[93m{warningMessage}\n{file_name} in {function} \033[35m{row} \033[93mrow")
+        f"\033[93mWarning:\033[3m  \033[93m{warningMessage}\n{file_name} in {function} \033[35m{row} \033[93mrow\033[0m")
 
 
 def error(errorMessage='', errorType=''):
@@ -31,9 +31,8 @@ def error(errorMessage='', errorType=''):
     row = stack.lineno
     # 输出红色文本
     print(
-        f"\033[91m{errorType.title()}:\033[3m  \033[91m{errorMessage}\n{file_name} in {function} \033[35m{row} \033[91mrow")
+        f"\033[91m{errorType.title()}:\033[3m  \033[91m{errorMessage}\n{file_name} in {function} \033[35m{row} \033[91mrow\033[0m")
     sys.exit(1)
-
 
 def info(info=''):
     """传入info信息"""
@@ -45,7 +44,7 @@ def info(info=''):
     row = stack.lineno
     # 输出绿色文本
     print(
-        f"\033[92mInfo:\033[3m  \033[92m{info}\n{file_name} in {function} \033[35m{row} \033[92mrow")
+        f"\033[92mInfo:\033[3m  \033[92m{info}\n{file_name} in {function} \033[35m{row} \033[92mrow\033[0m")
 
 
 if __name__ == '__main__':
