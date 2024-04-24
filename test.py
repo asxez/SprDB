@@ -1,23 +1,28 @@
 #!/usr/bin/python3.10.6
 # -*- coding: utf-8 -*-
 #
-# @Time    : 2024/4/23 下午2:01
+# @Time    : 2024/4/24 下午10:11
 # @Author  : ASXE
 
-import sys
+"""
+this is a test file.
+"""
 
 from parser import parser
 
+
+def testLexParser():
+    lexParser = parser.LexParser("select a from b where c = '11'")
+    lexParser.getNextToken()
+    while lexParser.curToken.tokenType != parser.TokenType.TOKEN_END:
+        print((lexParser.curToken.value, lexParser.curToken.tokenType, lexParser.preToken.tokenType))
+        lexParser.getNextToken()
+
+
+def testSyntaxParser():
+    sparser = parser.SyntaxParser("create table a (a int , b str ,)")
+    print(sparser.parse())
+
 if __name__ == '__main__':
-    print(">>> ", end='')
-    while True:
-        statement = input('')
-        if statement == 'exit':
-            print('Good Bye!')
-            sys.exit(0)
-        parse = parser.LexParser(statement)
-        parse.getNextToken()
-        while parse.curToken.tokenType != parser.TokenType.TOKEN_END:
-            print((parse.curToken.value, parse.curToken.tokenType, parse.preToken.tokenType))
-            parse.getNextToken()
-        print("sprDB >>> ", end='')
+    testLexParser()
+    testSyntaxParser()

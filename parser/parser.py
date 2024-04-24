@@ -6,6 +6,7 @@
 
 
 from enum import Enum, auto
+from typing import Any
 
 from common import log
 
@@ -28,6 +29,10 @@ class TokenType(Enum):
     TOKEN_LOGIC_OR = auto()  # or ||
     TOKEN_LOGIC_NOT = auto()  # not
     TOKEN_IN = auto()  # in
+    TOKEN_STR = auto()  # str
+    TOKEN_INT = auto()  # int
+    TOKEN_FLOAT = auto()  # float
+    TOKEN_BOOL = auto()  # bool
     TOKEN_NULL = auto()  # null
 
     TOKEN_MORE = auto()  # >
@@ -83,7 +88,11 @@ keywordsToken: list[KeywordsToken] = [
     KeywordsToken("OR", 2, TokenType.TOKEN_LOGIC_OR),
     KeywordsToken("NOT", 3, TokenType.TOKEN_LOGIC_NOT),
     KeywordsToken("NULL", 4, TokenType.TOKEN_NULL),
-    KeywordsToken("IN", 2, TokenType.TOKEN_IN)
+    KeywordsToken("IN", 2, TokenType.TOKEN_IN),
+    KeywordsToken("STR", 3, TokenType.TOKEN_STR),
+    KeywordsToken("INT", 3, TokenType.TOKEN_INT),
+    KeywordsToken("FLOAT", 5, TokenType.TOKEN_FLOAT),
+    KeywordsToken("BOOL", 4, TokenType.TOKEN_BOOL),
 ]
 
 
@@ -102,8 +111,8 @@ class LexParser:
             self.__curPosition += 1
 
     def __parseAnother(self) -> None:
+        # 识别关键字或者标识符
         if self.__sourceCode[self.__curPosition].isalnum() or self.__sourceCode[self.__curPosition] == '_':
-            # 识别关键字或者标识符
             identifier = ''
             while self.__curPosition < len(self.__sourceCode) and (
                     self.__sourceCode[self.__curPosition].isalnum() or self.__sourceCode[self.__curPosition] == '_'):
@@ -119,8 +128,7 @@ class LexParser:
                 self.curToken.length = len(identifier)
                 self.curToken.value = identifier
 
-        elif self.__sourceCode[self.__curPosition].isdigit():
-            # 识别数字
+        elif self.__sourceCode[self.__curPosition].isdigit():  # 识别数字
             num = ''
             while self.__curPosition < len(self.__sourceCode) and self.__sourceCode[self.__curPosition].isdigit():
                 num += self.__sourceCode[self.__curPosition]
@@ -129,13 +137,13 @@ class LexParser:
             self.curToken.length = len(num)
             self.curToken.value = num
 
-        elif self.__sourceCode[self.__curPosition] == "'":
+        elif self.__sourceCode[self.__curPosition] == "'":  # 识别字符串
             self.__curPosition += 1  # 跳过当前的"'"
-            # 识别字符串
             string = ''
             while self.__curPosition < len(self.__sourceCode):
                 if self.__sourceCode[self.__curPosition] == "'":
-                    if self.__curPosition + 1 < len(self.__sourceCode) and self.__sourceCode[self.__curPosition + 1] == "'":
+                    if self.__curPosition + 1 < len(self.__sourceCode) and self.__sourceCode[
+                        self.__curPosition + 1] == "'":
                         # 此时是一个转义字符
                         string += "'"
                         self.__curPosition += 2
@@ -152,8 +160,9 @@ class LexParser:
             self.curToken.length = len(string)
             self.curToken.value = string
 
+        # 数字，字符串，关键字之外的错误类型
         else:
-            log.error(f"an error occurred while parsing the token.", 'parse error')
+            log.error(f"an error occurred while parsing the token.", 'type error')
 
     def getNextToken(self) -> None:
         """获取下一个token"""
@@ -233,12 +242,114 @@ class LexParser:
                     break
 
 
+class SyntaxParser:
+    """语法分析器"""
+
+    def __init__(self, statement: str):
+        self.__lexParser: LexParser = LexParser(statement)
+
+    def parse(self):
+        """启动语法分析器"""
+        self.__lexParser.getNextToken()
+        if self.__lexParser.curToken.tokenType == TokenType.TOKEN_CREATE:
+            return self.__parseCreate()
+        elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_SELECT:
+            return self.__parseSelect()
+        elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_INSERT:
+            return self.__parseInsert()
+        elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_UPDATE:
+            return self.__parseUpdate()
+        elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_DELETE:
+            return self.__parseDelete()
+        else:
+            log.error('syntax is error.', 'syntax error')
+
+    def __parseCreate(self) -> dict[str, dict[str, Any]]:
+        """解析create命令"""
+        self.__lexParser.getNextToken()
+        curToken = self.__lexParser.curToken
+        if curToken.tokenType != TokenType.TOKEN_TABLE and curToken.tokenType != TokenType.TOKEN_DATABASE:
+            log.error('expect "table" or "database" after "create".', 'syntax error')
+
+        # create database [databaseName]
+        if curToken.tokenType == TokenType.TOKEN_DATABASE:
+            self.__lexParser.getNextToken()
+            return {
+                "CREATE_DATABASE": {
+                    "databaseName": self.__lexParser.curToken.value,
+                }
+            }
+
+        # create table ...
+        if curToken.tokenType == TokenType.TOKEN_TABLE:
+            syntaxTreeTable = {
+                "CREATE_TABLE": {
+                    "tableName": "",
+                    "columns": []
+                }
+            }
+
+            self.__lexParser.getNextToken()
+            if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:  # 未定义表名，抛出syntax error
+                log.error('expect table name after "TABLE".', 'syntax error')
+            syntaxTreeTable['CREATE_TABLE']['tableName'] = self.__lexParser.curToken.value
+
+            self.__lexParser.getNextToken()
+            if self.__lexParser.curToken.tokenType != TokenType.TOKEN_LEFT_PAREN:
+                log.error('expected "(" after table name.', 'syntax error')
+
+            # 死循环读入表列及列类型
+            while True:
+                self.__lexParser.getNextToken()
+                if self.__lexParser.curToken.tokenType == TokenType.TOKEN_RIGHT_PAREN:
+                    break
+
+                # 取得列名
+                if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
+                    log.error('expected column name.', 'syntax error')
+                column_name = self.__lexParser.curToken.value
+
+                # 取得列类型
+                self.__lexParser.getNextToken()
+                token = self.__lexParser.curToken
+                if token.tokenType != TokenType.TOKEN_INT and token.tokenType != TokenType.TOKEN_STR and token.tokenType != TokenType.TOKEN_FLOAT:
+                    log.error('expected data type for column.', 'syntax error')
+                data_type = self.__lexParser.curToken.value
+
+                syntaxTreeTable['CREATE_TABLE']['columns'].append((column_name, data_type))
+
+                self.__lexParser.getNextToken()
+                if self.__lexParser.curToken.tokenType == TokenType.TOKEN_COMMA:  # 后面还有列，继续
+                    continue
+                elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_RIGHT_PAREN:  # 结束
+                    break
+                else:
+                    log.error('unexpected token.', 'syntax error')
+
+            # 不允许空列
+            if not syntaxTreeTable['CREATE_TABLE']['columns']:
+                log.error('empty column definition.', 'syntax error')
+
+            return syntaxTreeTable
+
+    def __parseSelect(self):
+        ...
+
+    def __parseInsert(self):
+        ...
+
+    def __parseUpdate(self):
+        ...
+
+    def __parseDelete(self):
+        ...
+
+
 if __name__ == '__main__':
-    parser = LexParser("""UPDATE table_name
-SET column1 = value1, column2 = value2, ...
-WHERE condition;
-""")
+    parser = LexParser("create table a (a int, b float)")
     parser.getNextToken()
     while parser.curToken.tokenType != TokenType.TOKEN_END:
         print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
         parser.getNextToken()
+    sparser = SyntaxParser("create table a (b int, c str,)")
+    print(sparser.parse())
