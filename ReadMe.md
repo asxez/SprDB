@@ -1,5 +1,7 @@
 # sprDB
 
+The sprDB is under development...
+
 ## Build Instructions
 on Windows:
 ```bash
