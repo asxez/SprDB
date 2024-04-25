@@ -1,9 +1,14 @@
 ## 语法
-create database [databaseName]
+create database < database >
 
-create table [tableName] ([column] type, ...)
+create table < table > (< column > type, ...)
+
+select * | < column > from < table > [where ...]
+
+insert into < table >  [(id, name, age, grade)] values(...)
+
 
 ## 错误类型
 - syntax error
-- token error
+- type error
 - 

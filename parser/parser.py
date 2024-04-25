@@ -112,7 +112,7 @@ class LexParser:
 
     def __parseAnother(self) -> None:
         # 识别关键字或者标识符
-        if self.__sourceCode[self.__curPosition].isalnum() or self.__sourceCode[self.__curPosition] == '_':
+        if self.__sourceCode[self.__curPosition].isalpha() or self.__sourceCode[self.__curPosition] == '_':
             identifier = ''
             while self.__curPosition < len(self.__sourceCode) and (
                     self.__sourceCode[self.__curPosition].isalnum() or self.__sourceCode[self.__curPosition] == '_'):
@@ -130,7 +130,8 @@ class LexParser:
 
         elif self.__sourceCode[self.__curPosition].isdigit():  # 识别数字
             num = ''
-            while self.__curPosition < len(self.__sourceCode) and self.__sourceCode[self.__curPosition].isdigit():
+            while self.__curPosition < len(self.__sourceCode) and (
+                    self.__sourceCode[self.__curPosition].isdigit() or self.__sourceCode[self.__curPosition] == '.'):
                 num += self.__sourceCode[self.__curPosition]
                 self.__curPosition += 1
             self.curToken.tokenType = TokenType.TOKEN_NUM
@@ -266,7 +267,7 @@ class SyntaxParser:
 
     def __parseCreate(self) -> dict[str, dict[str, Any]]:
         """解析create命令"""
-        self.__lexParser.getNextToken()
+        self.__lexParser.getNextToken()  # 跳过create
         curToken = self.__lexParser.curToken
         if curToken.tokenType != TokenType.TOKEN_TABLE and curToken.tokenType != TokenType.TOKEN_DATABASE:
             log.error('expect "table" or "database" after "create".', 'syntax error')
@@ -332,8 +333,138 @@ class SyntaxParser:
 
             return syntaxTreeTable
 
+    # def __parseWhere(self):
+    #     """解析where子句"""
+    #     self.__lexParser.getNextToken()  # 跳过where
+    #     where = []
+    #     while True:
+    #         # 解析列名
+    #         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
+    #             log.error('expect column name after "where".', 'syntax error')
+    #         column = self.__lexParser.curToken.value
+    #
+    #         # 解析操作符
+    #         self.__lexParser.getNextToken()
+    #         curToken = self.__lexParser.curToken
+    #         if curToken.tokenType not in [TokenType.TOKEN_EQUAL, TokenType.TOKEN_MORE, TokenType.TOKEN_MORE_EQUAL,
+    #                                       TokenType.TOKEN_LESS, TokenType.TOKEN_LESS_EQUAL]:
+    #             log.error('expect "=" after "where".', 'syntax error')
+    #         operator = curToken.value
+    #
+    #         # 解析值
+    #         self.__lexParser.getNextToken()
+    #         curToken = self.__lexParser.curToken
+    #         if curToken.tokenType != TokenType.TOKEN_STRING and curToken.tokenType != TokenType.TOKEN_NUM:
+    #             log.error('expect value type string | num.', 'syntax error')
+    #         value = curToken.value
+    #         where.append((column, value, operator))
+    #
+    #         self.__lexParser.getNextToken()
+    #         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_LOGIC_AND and self.__lexParser.curToken.tokenType != TokenType.TOKEN_LOGIC_OR:
+    #             break
+    #         self.__lexParser.getNextToken()
+    #
+    #     return where
+
+    def __parseWhere(self):
+        """解析WHERE子句"""
+        self.__lexParser.getNextToken()  # 跳过WHERE
+        where = self.__parseExpression()
+        return where
+
+    def __parseExpression(self):
+        """解析表达式"""
+        expression = []
+        while True:
+            if self.__lexParser.curToken.tokenType != TokenType.TOKEN_LEFT_PAREN:
+                column = self.__lexParser.curToken.value
+
+                # 解析操作符
+                self.__lexParser.getNextToken()
+                curToken = self.__lexParser.curToken
+                if curToken.tokenType not in [TokenType.TOKEN_EQUAL, TokenType.TOKEN_MORE, TokenType.TOKEN_MORE_EQUAL,
+                                              TokenType.TOKEN_LESS, TokenType.TOKEN_LESS_EQUAL]:
+                    log.error('expect comparison operator after column name.', 'syntax error')
+                operator = curToken.value
+
+                # 解析值
+                self.__lexParser.getNextToken()
+                curToken = self.__lexParser.curToken
+                if curToken.tokenType != TokenType.TOKEN_STRING and curToken.tokenType != TokenType.TOKEN_NUM:
+                    log.error('expect value type string or number after comparison operator.', 'type error')
+                value = curToken.value
+                expression.append((column, operator, value))
+
+                self.__lexParser.getNextToken()
+            else:
+                # 遇到左括号，递归解析括号内的表达式
+                self.__lexParser.getNextToken()  # 跳过左括号
+                sub_expression = self.__parseExpression()
+                expression.append(sub_expression)
+
+            # 判断是否继续解析下一个条件
+            if self.__lexParser.curToken.tokenType != TokenType.TOKEN_LOGIC_AND and self.__lexParser.curToken.tokenType != TokenType.TOKEN_LOGIC_OR:
+                break
+
+            # 解析逻辑运算符
+            logical_operator = self.__lexParser.curToken.value
+            expression.append(logical_operator)
+            self.__lexParser.getNextToken()
+
+        # 在这里，检查是否遇到右括号或者是 WHERE 子句的结束
+        if self.__lexParser.curToken.tokenType == TokenType.TOKEN_RIGHT_PAREN:
+            self.__lexParser.getNextToken()  # 跳过右括号
+            return expression  # 返回括号内的表达式
+        elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_END:
+            return expression  # 返回整个表达式
+        else:
+            log.error('syntax error: unexpected token after expression.', 'syntax error')
+
     def __parseSelect(self):
-        ...
+        """解析select命令"""
+        self.__lexParser.getNextToken()  # 跳过select
+        curToken = self.__lexParser.curToken
+        if curToken.tokenType != TokenType.TOKEN_ID and curToken.tokenType != TokenType.TOKEN_STAR:
+            log.error('expect "*" or column name after select.', 'syntax error')
+
+        columns = []
+        if curToken.tokenType == TokenType.TOKEN_STAR:
+            columns.append('*')
+        else:  # 解析列名列表
+            while True:
+                columns.append(self.__lexParser.curToken.value)
+                self.__lexParser.getNextToken()  # 此处，若后面已经不是逗号，则列名已解析完成，目前已经读到from
+                if self.__lexParser.curToken.tokenType != TokenType.TOKEN_COMMA:
+                    break
+                self.__lexParser.getNextToken()
+                if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
+                    log.error('expect column name after ",".', 'syntax error')
+
+        syntaxTree = {
+            "SELECT": {
+                "columns": columns,  # 列名列表
+                "from": "",  # 表名
+                "where": [],  # WHERE 子句的条件表达式
+            }
+        }
+
+        # 解析from
+        if self.__lexParser.curToken.tokenType != TokenType.TOKEN_FROM:
+            log.error('expect "from" after column list.', 'syntax error')
+
+        self.__lexParser.getNextToken()
+        if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
+            log.error('expect table name after "from".', 'syntax error')
+
+        syntaxTree['SELECT']['from'] = self.__lexParser.curToken.value  # 表名
+
+        # 解析where子句
+        self.__lexParser.getNextToken()
+        if self.__lexParser.curToken.tokenType != TokenType.TOKEN_WHERE:
+            return syntaxTree
+        syntaxTree['SELECT']['where'] = self.__parseWhere()
+
+        return syntaxTree
 
     def __parseInsert(self):
         ...
@@ -346,10 +477,10 @@ class SyntaxParser:
 
 
 if __name__ == '__main__':
-    parser = LexParser("create table a (a int, b float)")
-    parser.getNextToken()
-    while parser.curToken.tokenType != TokenType.TOKEN_END:
-        print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
-        parser.getNextToken()
-    sparser = SyntaxParser("create table a (b int, c str,)")
+    # parser = LexParser("select * from student where age='s' or grade=12.4")
+    # parser.getNextToken()
+    # while parser.curToken.tokenType != TokenType.TOKEN_END:
+    #     print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
+    #     parser.getNextToken()
+    sparser = SyntaxParser("select a, b from student where (age='s' or grade=12.4) and (a = 1 or a = 2)")
     print(sparser.parse())
