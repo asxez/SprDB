@@ -531,10 +531,53 @@ class SyntaxParser:
         return values
 
     def __parseUpdate(self):
-        self.__lexParser.getNextToken() # 跳过update
+        self.__lexParser.getNextToken()  # 跳过update
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
             log.error('expect table name after "update".', 'syntaxError')
-        
+
+        syntaxTree = {
+            "UPDATE": {
+                "table": "",  # 目标数据表
+                "set": [],  # SET 子句中的更新值，键值对表示列名和对应的更新值
+                "where": []  # WHERE 子句的条件表达式
+            }
+        }
+        syntaxTree['UPDATE']['table'] = self.__lexParser.curToken.value
+
+        self.__lexParser.getNextToken() # set
+        if self.__lexParser.curToken.tokenType != TokenType.TOKEN_SET:
+            log.error('expect "set" after table name.', 'syntaxError')
+
+        self.__lexParser.getNextToken() # 跳过set，后面应该是column name
+        while True:
+            if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
+                log.error('expect column name.', 'syntaxError')
+            column = self.__lexParser.curToken.value
+
+            self.__lexParser.getNextToken()
+            if self.__lexParser.curToken.tokenType != TokenType.TOKEN_EQUAL:
+                log.error('expect "=" after column name.', 'syntaxError')
+
+            self.__lexParser.getNextToken()
+            if self.__lexParser.curToken.tokenType != TokenType.TOKEN_NUM and self.__lexParser.curToken.tokenType != TokenType.TOKEN_STRING:
+                log.error('unexpect value type.', 'typeError')
+            value = self.__lexParser.curToken.value
+            syntaxTree['UPDATE']['set'].append((column, value))
+
+            self.__lexParser.getNextToken()
+            if self.__lexParser.curToken.tokenType == TokenType.TOKEN_COMMA:
+                self.__lexParser.getNextToken() # 跳过逗号，便于下次循环
+                continue
+            elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_WHERE or self.__lexParser.curToken.tokenType == TokenType.TOKEN_END:
+                break
+            else:
+                log.error('unexpect token.', 'syntaxError')
+
+        # 解析where子句
+        if self.__lexParser.curToken.tokenType == TokenType.TOKEN_WHERE:
+            syntaxTree['UPDATE']['where'] = self.__parseWhere()
+
+        return syntaxTree
 
     def __parseDelete(self):
         ...
@@ -546,5 +589,5 @@ if __name__ == '__main__':
     # while parser.curToken.tokenType != TokenType.TOKEN_END:
     #     print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
     #     parser.getNextToken()
-    sparser = SyntaxParser("insert into a (b) values (1,'asxe',3)  ,  (3,4,4)")
+    sparser = SyntaxParser("update a set b=1, d='asxe' where b=1 and c>=2")
     print(sparser.parse())
