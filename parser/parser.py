@@ -285,8 +285,8 @@ class SyntaxParser:
         if curToken.tokenType == TokenType.TOKEN_TABLE:
             syntaxTreeTable = {
                 "CREATE_TABLE": {
-                    "tableName": "",
-                    "columns": []
+                    "tableName": "", # 表名
+                    "columns": [] # 列名列表
                 }
             }
 
@@ -538,7 +538,7 @@ class SyntaxParser:
         syntaxTree = {
             "UPDATE": {
                 "table": "",  # 目标数据表
-                "set": [],  # SET 子句中的更新值，键值对表示列名和对应的更新值
+                "set": [],  # SET 子句中的更新值
                 "where": []  # WHERE 子句的条件表达式
             }
         }
@@ -589,5 +589,5 @@ if __name__ == '__main__':
     # while parser.curToken.tokenType != TokenType.TOKEN_END:
     #     print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
     #     parser.getNextToken()
-    sparser = SyntaxParser("update a set b=1, d='asxe' where b=1 and c>=2")
+    sparser = SyntaxParser("update a set b=1, d='asxe' where (b=1 and c>=2) or e='asxe666'")
     print(sparser.parse())
