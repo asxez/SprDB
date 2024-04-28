@@ -52,6 +52,7 @@ def createTable(dataName, table, dataType):
         value.append(dataType[i] + ":" + str(n))
         n += 1
     dataType = dict(zip(key, value))
+    print(dataType)
     with open(dataName, "w", encoding="utf-8") as f:
         f.write(str(dataType) + "\n")
     log.info(f"created {dataName}")
@@ -103,20 +104,20 @@ def selectUseEQ(databaseName, table, dataCheck=None):
     # value = []
     # for i in dataCheck.keys():
 
-
-if __name__ == '__main__':
-    liss = selectUseEQ("mydata", "table")
-    print(liss)
 #
+# if __name__ == '__main__':
+#     liss = selectUseEQ("mydata", "table")
+#     print(liss)
+# #
 # if __name__ == '__main__':
 #     data = {"a": 1, "b": 2, "c": 3}
 #     insert("mydata", "table", data)
 #
-# if __name__ == '__main__':
-#     createDatabase("mydata")
-#     datatype = {"a": "int", "b": "int", "c": "int"}
-#     createTable("mydata", "table", datatype)
-#
+if __name__ == '__main__':
+    createDatabase("mydata")
+    datatype = {"a": "int", "b": "int", "c": "int"}
+    createTable("mydata", "table", datatype)
+
 # if __name__ == '__main__':
 #     dropTable("mydata", "table")
 #     dropDatabase("mydata")
