@@ -285,8 +285,8 @@ class SyntaxParser:
         if curToken.tokenType == TokenType.TOKEN_TABLE:
             syntaxTreeTable = {
                 "CREATE_TABLE": {
-                    "tableName": "", # 表名
-                    "columns": [] # 列名列表
+                    "tableName": "",  # 表名
+                    "columns": []  # 列名列表
                 }
             }
 
@@ -544,11 +544,11 @@ class SyntaxParser:
         }
         syntaxTree['UPDATE']['table'] = self.__lexParser.curToken.value
 
-        self.__lexParser.getNextToken() # set
+        self.__lexParser.getNextToken()  # set
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_SET:
             log.error('expect "set" after table name.', 'syntaxError')
 
-        self.__lexParser.getNextToken() # 跳过set，后面应该是column name
+        self.__lexParser.getNextToken()  # 跳过set，后面应该是column name
         while True:
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
                 log.error('expect column name.', 'syntaxError')
@@ -566,7 +566,7 @@ class SyntaxParser:
 
             self.__lexParser.getNextToken()
             if self.__lexParser.curToken.tokenType == TokenType.TOKEN_COMMA:
-                self.__lexParser.getNextToken() # 跳过逗号，便于下次循环
+                self.__lexParser.getNextToken()  # 跳过逗号，便于下次循环
                 continue
             elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_WHERE or self.__lexParser.curToken.tokenType == TokenType.TOKEN_END:
                 break
@@ -580,7 +580,26 @@ class SyntaxParser:
         return syntaxTree
 
     def __parseDelete(self):
-        ...
+        self.__lexParser.getNextToken()  # 跳过delete
+        if self.__lexParser.curToken.tokenType != TokenType.TOKEN_FROM:
+            log.error('expect "from" after "delete".', 'syntaxError')
+
+        self.__lexParser.getNextToken()
+        if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
+            log.error('expect table name after "from".', 'syntaxError')
+
+        syntaxTree = {
+            "DELETE": {
+                "table": self.__lexParser.curToken.value,  # 目标数据表
+                "where": []  # WHERE 子句的条件表达式
+            }
+        }
+
+        self.__lexParser.getNextToken()
+        if self.__lexParser.curToken.tokenType == TokenType.TOKEN_WHERE:
+            syntaxTree['DELETE']['where'] = self.__parseWhere()
+
+        return syntaxTree
 
 
 if __name__ == '__main__':
@@ -589,5 +608,5 @@ if __name__ == '__main__':
     # while parser.curToken.tokenType != TokenType.TOKEN_END:
     #     print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
     #     parser.getNextToken()
-    sparser = SyntaxParser("update a set b=1, d='asxe' where (b=1 and c>=2) or e='asxe666'")
+    sparser = SyntaxParser("delete from a where b = 1")
     print(sparser.parse())
