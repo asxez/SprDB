@@ -15,11 +15,6 @@ if __name__ == '__main__':
         if statement == 'exit':
             print('Good Bye!')
             sys.exit(0)
-        parse = parser.LexParser(statement)
-        parse.getNextToken()
-        while parse.curToken.tokenType != parser.TokenType.TOKEN_END:
-            print((parse.curToken.value, parse.curToken.tokenType, parse.preToken.tokenType))
-            parse.getNextToken()
-        sparser = parser.SyntaxParser(statement)
-        print(sparser.parse())
+        parse = parser.SyntaxParser(statement)
+        print(parse.parse())
         print("sprDB >>> ", end='')
