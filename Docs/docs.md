@@ -14,4 +14,6 @@ delete from < table > [where ...]
 ## 错误类型
 - syntaxError
 - typeError
+- databaseExistsError
+- tableExistsError
 - 

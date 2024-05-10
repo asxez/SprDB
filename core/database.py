@@ -7,6 +7,7 @@
 import os
 
 from .core import SerializedInterface
+from .table import Table
 from common import log
 
 
@@ -25,7 +26,9 @@ class DataBase(SerializedInterface):
         os.rmdir(self.databaseName)
 
     def createTable(self, name: str):
-        ...
+        if name in self.__tableName:
+            log.error('table exists.', 'tableExistsError')
+
 
     def existsTable(self):
         ...
