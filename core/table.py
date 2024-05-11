@@ -5,13 +5,21 @@
 # @Author  : ASXE
 
 from .core import SerializedInterface
+from .column import Column
 from common import log
 
 
 class Table(SerializedInterface):
 
-    def __init__(self):
-        ...
+    def __init__(self, name: str, columns: list):
+        self.name = name
+        self.__columnObj = []
+        self.__initColumn(columns)
+
+    def __initColumn(self, columns):
+        """初始化列名列表"""
+        for column in columns:
+            self.__columnObj[column[0]] = Column(column[0], column[1])
 
     def insert(self):
         ...

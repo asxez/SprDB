@@ -16,4 +16,6 @@ delete from < table > [where ...]
 - typeError
 - databaseExistsError
 - tableExistsError
+- columnExistsError
+- tableNotExists
 - 

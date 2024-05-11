@@ -532,7 +532,8 @@ class SyntaxParser:
 
         return values
 
-    def __parseUpdate(self):
+    def __parseUpdate(self) -> dict[str, dict[str, str | list]]:
+        """解析update命令"""
         self.__lexParser.getNextToken()  # 跳过update
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
             log.error(f'expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
@@ -581,7 +582,8 @@ class SyntaxParser:
 
         return syntaxTree
 
-    def __parseDelete(self):
+    def __parseDelete(self) -> dict[str, dict[str, str | list]]:
+        """解析delete命令"""
         self.__lexParser.getNextToken()  # 跳过delete
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_FROM:
             log.error(f'expect "from" after "{self.__lexParser.preToken.value}".', 'syntaxError')
@@ -610,5 +612,5 @@ if __name__ == '__main__':
     # while parser.curToken.tokenType != TokenType.TOKEN_END:
     #     print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
     #     parser.getNextToken()
-    sparser = SyntaxParser("delete from a where b = 1")
+    sparser = SyntaxParser("create table a (b int , c float)")
     print(sparser.parse())
