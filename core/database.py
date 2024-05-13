@@ -7,27 +7,18 @@
 import os
 import shutil
 import pickle
+import lzma
 
-from .core import SerializedInterface
+from .core import SerializedInterface, CompressInterface
 from .table import Table
 from common import log
 
 
-class DataBase(SerializedInterface):
+class Database(SerializedInterface, CompressInterface):
 
     def __init__(self, name: str):
         self.databaseName = name
         self.__tableObj = {}
-
-    def createDatabase(self):
-        """创建数据库"""
-        if os.path.exists(self.databaseName):
-            log.error('database already exists.', 'databaseExistsError')
-        os.makedirs(self.databaseName)
-
-    def dropDatabase(self):
-        """删除数据库"""
-        shutil.rmtree(self.databaseName)
 
     def createTable(self, name: str, columns: list):
         """创建表"""
@@ -52,3 +43,24 @@ class DataBase(SerializedInterface):
     def deserialized(self):
         """反序列化"""
         ...
+
+    def compress(self):
+        """压缩"""
+        return lzma.compress
+
+    def decompress(self):
+        """解压缩"""
+        return lzma.decompress
+
+
+def createDatabase(databaseName: str) -> Database:
+    """创建数据库"""
+    if os.path.exists(databaseName):
+        log.error('database already exists.', 'databaseExistsError')
+    os.makedirs(databaseName)
+    return Database(databaseName)
+
+
+def dropDatabase(databaseName: str) -> None:
+    """删除数据库"""
+    shutil.rmtree(databaseName)

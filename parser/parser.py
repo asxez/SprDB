@@ -612,5 +612,5 @@ if __name__ == '__main__':
     # while parser.curToken.tokenType != TokenType.TOKEN_END:
     #     print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
     #     parser.getNextToken()
-    sparser = SyntaxParser("create table a (b int , c float)")
+    sparser = SyntaxParser("create table a (b INT , c float)")
     print(sparser.parse())

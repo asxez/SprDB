@@ -12,19 +12,26 @@ class SerializedInterface:
     pickle: pickle = pickle
 
     def serialized(self):
-        """序列化"""
         ...
 
     def deserialized(self):
-        """反序列化"""
         ...
 
 
-class Compress:
+class CompressInterface:
     """压缩"""
 
     def compress(self):
         ...
 
-    def uncompress(self):
+    def decompress(self):
         ...
+
+
+def convertType(type: str):
+    if type.lower() == 'int':
+        return int()
+    elif type.lower() == 'float':
+        return float()
+    elif type.lower() == 'str':
+        return str()

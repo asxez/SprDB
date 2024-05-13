@@ -4,7 +4,10 @@
 # @Time    : 2024/5/11 下午1:38
 # @Author  : ASXE
 
+from .core import convertType
+
+
 class Column:
     def __init__(self, name: str, type: str):
         self.name = name
-        self.type = type
+        self.type = convertType(type)
