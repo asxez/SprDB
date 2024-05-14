@@ -4,27 +4,24 @@
 # @Time    : 2024/4/25 上午8:41
 # @Author  : ASXE
 
-import pickle
-
 
 class SerializedInterface:
     """序列化接口"""
-    pickle: pickle = pickle
 
-    def serialized(self):
+    def serialized(self, data):
         ...
 
-    def deserialized(self):
+    def deserialized(self, data):
         ...
 
 
 class CompressInterface:
     """压缩"""
 
-    def compress(self):
+    def compress(self, data):
         ...
 
-    def decompress(self):
+    def decompress(self, data):
         ...
 
 

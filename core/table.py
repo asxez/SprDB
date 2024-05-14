@@ -4,19 +4,22 @@
 # @Time    : 2024/4/30 下午1:36
 # @Author  : ASXE
 
-from .core import SerializedInterface
+from typing import Tuple, List, Dict, AnyStr
+
 from .column import Column
-from common import log
+from .core import SerializedInterface
+from .page import Page
 
 
 class Table(SerializedInterface):
 
-    def __init__(self, name: str, columns: list):
+    def __init__(self, name: AnyStr, columns: List[Tuple[AnyStr]]):
         self.name = name
-        self.__columnObj = []
+        self.__columnObj: Dict = {}
         self.__initColumn(columns)
+        self.__page = []
 
-    def __initColumn(self, columns):
+    def __initColumn(self, columns: List[Tuple[AnyStr]]):
         """初始化列名列表"""
         for column in columns:
             self.__columnObj[column[0]] = Column(column[0], column[1])
@@ -33,8 +36,8 @@ class Table(SerializedInterface):
     def delete(self):
         ...
 
-    def serialized(self):
+    def serialized(self, data):
         ...
 
-    def deserialized(self):
+    def deserialized(self, data):
         ...

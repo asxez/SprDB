@@ -5,6 +5,14 @@
 # @Author  : ASXE
 
 class Page:
-    def __init__(self):
-        ...
+    """页"""
 
+    def __init__(self):
+        self.rowMax = 258
+        self.row = []
+
+    def __len__(self):
+        return len(self.row)
+
+    def __contains__(self, row):
+        return row in self.row

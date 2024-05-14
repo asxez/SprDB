@@ -4,56 +4,55 @@
 # @Time    : 2024/4/30 下午1:36
 # @Author  : ASXE
 
-import os
-import shutil
-import pickle
 import lzma
+import os
+import pickle
+import shutil
+from typing import List, Tuple, AnyStr
 
+from common import log
 from .core import SerializedInterface, CompressInterface
 from .table import Table
-from common import log
 
 
 class Database(SerializedInterface, CompressInterface):
 
-    def __init__(self, name: str):
+    def __init__(self, name: AnyStr):
         self.databaseName = name
-        self.__tableObj = {}
+        self.__tables = []
 
-    def createTable(self, name: str, columns: list):
+    def createTable(self, name: AnyStr, columns: List[Tuple[AnyStr]]):
         """创建表"""
-        if name in self.__tableObj:
+        if name in self.__tables:
             log.error('table already exists.', 'tableExistsError')
-        self.__tableObj[name] = Table(name, columns)
-        tableFile = os.open(f'./{self.databaseName}/{name}.db', os.O_RDWR | os.O_CREAT)
-        os.write(tableFile, self.serialized())
-        os.close(tableFile)
-        ...
+        self.__tables.append(name)
+        with lzma.open(f'./{self.databaseName}/{name}.db', 'wb') as file:
+            file.write(self.compress(self.serialized(Table(name, columns))))
 
-    def dropTable(self, name: str):
+    def dropTable(self, name: AnyStr):
         """删除表"""
-        if name not in self.__tableObj:
+        if name not in self.__tables:
             log.error('table not exists.', 'tableNotExists')
         os.remove(f'{name}.db')
 
-    def serialized(self):
+    def serialized(self, data):
         """序列化"""
-        return pickle.dumps(self.__tableObj)
+        return pickle.dumps(data)
 
-    def deserialized(self):
+    def deserialized(self, data):
         """反序列化"""
-        ...
+        return pickle.loads(data)
 
-    def compress(self):
+    def compress(self, data):
         """压缩"""
-        return lzma.compress
+        return lzma.compress(data)
 
-    def decompress(self):
+    def decompress(self, data):
         """解压缩"""
-        return lzma.decompress
+        return lzma.decompress(data)
 
 
-def createDatabase(databaseName: str) -> Database:
+def createDatabase(databaseName: AnyStr) -> Database:
     """创建数据库"""
     if os.path.exists(databaseName):
         log.error('database already exists.', 'databaseExistsError')
@@ -61,6 +60,6 @@ def createDatabase(databaseName: str) -> Database:
     return Database(databaseName)
 
 
-def dropDatabase(databaseName: str) -> None:
+def dropDatabase(databaseName: AnyStr) -> None:
     """删除数据库"""
     shutil.rmtree(databaseName)
