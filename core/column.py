@@ -4,7 +4,7 @@
 # @Time    : 2024/5/11 下午1:38
 # @Author  : ASXE
 
-from .core import convertType
+from core import convertType
 
 
 class Column:

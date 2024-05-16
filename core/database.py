@@ -8,7 +8,7 @@ import lzma
 import os
 import pickle
 import shutil
-from typing import List, Tuple, AnyStr
+from typing import List, Tuple
 
 from common import log
 from .core import SerializedInterface, CompressInterface
@@ -17,11 +17,11 @@ from .table import Table
 
 class Database(SerializedInterface, CompressInterface):
 
-    def __init__(self, name: AnyStr):
+    def __init__(self, name: str):
         self.databaseName = name
         self.__tables = []
 
-    def createTable(self, name: AnyStr, columns: List[Tuple[AnyStr]]):
+    def createTable(self, name: str, columns: List[Tuple[str]]):
         """创建表"""
         if name in self.__tables:
             log.error('table already exists.', 'tableExistsError')
@@ -29,7 +29,7 @@ class Database(SerializedInterface, CompressInterface):
         with lzma.open(f'./{self.databaseName}/{name}.db', 'wb') as file:
             file.write(self.compress(self.serialized(Table(name, columns))))
 
-    def dropTable(self, name: AnyStr):
+    def dropTable(self, name: str):
         """删除表"""
         if name not in self.__tables:
             log.error('table not exists.', 'tableNotExists')
@@ -52,7 +52,7 @@ class Database(SerializedInterface, CompressInterface):
         return lzma.decompress(data)
 
 
-def createDatabase(databaseName: AnyStr) -> Database:
+def createDatabase(databaseName: str) -> Database:
     """创建数据库"""
     if os.path.exists(databaseName):
         log.error('database already exists.', 'databaseExistsError')
@@ -60,6 +60,6 @@ def createDatabase(databaseName: AnyStr) -> Database:
     return Database(databaseName)
 
 
-def dropDatabase(databaseName: AnyStr) -> None:
+def dropDatabase(databaseName: str) -> None:
     """删除数据库"""
     shutil.rmtree(databaseName)
