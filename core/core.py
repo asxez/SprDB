@@ -125,7 +125,7 @@ class BPlusTreeNode:
 
 
 class BPlusTree:
-    def __init__(self, order: int = 4):
+    def __init__(self, order: int = 1000):
         self.root = BPlusTreeNode(order)
         self.order = order
 

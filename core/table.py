@@ -139,6 +139,10 @@ if __name__ == '__main__':
     table = Table('test', [('a', 'int'), ('b', 'float')])
     table.insert(['a', 'b'], [[1, 2], [2, 2]])
     table.insert(['a', 'b'], [[1, 3], [1, 2]])
+    table.insert(['a', 'b'], [[1, 3], [1, 2]])
+    table.insert(['a', 'b'], [[1, 3], [1, 2]])
+    table.insert(['a', 'b'], [[1, 3], [1, 2]])
+    table.insert(['a', 'b'], [[1, 3], [1, 2]])
     table.insert(['a'], [[1]])
 
     # TODO
