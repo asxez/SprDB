@@ -5,12 +5,11 @@
 # @Author  : ASXE
 
 import pickle
-import sys
 import threading
-
 from typing import Tuple, List, Dict, Any, Optional, AnyStr
 
 from column import Column
+from common import log
 from core import SerializedInterface, BPlusTree
 from page import Page
 from row import Row
@@ -27,28 +26,62 @@ class Table(SerializedInterface):
         self.__pages = [Page(), ]  # 页
         self.__lock = threading.RLock()
 
-    def __initColumn(self, columns: List[Tuple[str, str]]):
+    def __initColumn(self, columns: List[Tuple[str, str]]) -> None:
         """初始化列名列表"""
         for column in columns:
             self.__columnObj[column[0]] = Column(column[0], column[1])
             self.__index[column[0]] = BPlusTree()
 
-    def insert(self, row: Dict[AnyStr, Any]):
+    def insert(self, columns: List[str], rows: List[List[Any]]):
         """插入数据"""
-        newRow = Row()
-        for columnName, columnValue in row.items():
-            newRow.setValue(columnName, columnValue)
-            self.__index[columnName].insert(columnValue, newRow)
+        if len(columns) != len(rows[0]):
+            log.error("Number of columns doesn't match number of values", 'valueError')
 
         with self.__lock:
-            currentPage = self.__pages[-1]
-            if len(currentPage) >= currentPage.rowMax:
-                currentPage = Page()
-                self.__pages.append(currentPage)
-            currentPage.addRow(newRow)
+            for rowData in rows:
+                if len(rowData) != len(columns):
+                    log.error("Number of values in row doesn't match number of columns.", 'valueError')
 
-    def select(self, condition: Optional[Dict[AnyStr, Any]] = None) -> List[Row]:
+                rowValues = {}
+                for colName, colValue in zip(columns, rowData):
+                    if colName not in self.__columnObj:
+                        log.error(f"Column '{colName}' does not exist in table.", 'columnNotExistsError')
+
+                    column = self.__columnObj[colName]
+                    if column.type == 'int':
+                        try:
+                            colValue = int(colValue)
+                        except ValueError:
+                            log.error(f"Invalid value '{colValue}' for column '{colName}'. Expected int.", 'typeError')
+                    elif column.type == 'float':
+                        try:
+                            colValue = float(colValue)
+                        except ValueError:
+                            log.error(f"Invalid value '{colValue}' for column '{colName}'. Expected float.",
+                                      'typeError')
+                    elif column.type == 'str':
+                        if not isinstance(colValue, str):
+                            log.error(f"Invalid value '{colValue}' for column '{colName}'. Expected str.", 'typeError')
+                    else:
+                        log.error(f"Unsupported data type '{column.type}' for column '{colName}'", 'typeError')
+
+                    rowValues[colName] = colValue
+
+                newRow = Row()
+                newRow.values = rowValues
+
+                for columnName, columnValue in rowValues.items():
+                    self.__index[columnName].insert(columnValue, newRow)
+
+                currentPage = self.__pages[-1]
+                if len(currentPage) >= currentPage.rowMax:
+                    currentPage = Page()
+                    self.__pages.append(currentPage)
+                currentPage.addRow(newRow)
+
+    def select(self, columns: List[str], condition, where: Optional[List[Any]] = None) -> List[Row]:
         """选择符合条件的行"""
+        # TODO
         with self.__lock:
             if condition:
                 # 如果有条件，根据索引加速查找
@@ -104,5 +137,12 @@ class Table(SerializedInterface):
 
 if __name__ == '__main__':
     table = Table('test', [('a', 'int'), ('b', 'float')])
-    table.insert({'a': 666, 'b':77.7})
-    print(table.select()[0].values)
+    table.insert(['a', 'b'], [[1, 2], [2, 2]])
+    table.insert(['a', 'b'], [[1, 3], [1, 2]])
+    table.insert(['a'], [[1]])
+
+    # TODO
+    res = table.select(['*'], {'a': 2})
+    print(res.values)
+    for r in res:
+        print(r.values)

@@ -5,7 +5,6 @@
 # @Author  : ASXE
 
 import pickle
-
 from typing import List, Dict, Any
 
 from row import Row

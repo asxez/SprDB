@@ -4,10 +4,11 @@
 # @Time    : 2024/5/11 下午1:38
 # @Author  : ASXE
 
-from core import convertType
+
+from typing import Optional
 
 
 class Column:
-    def __init__(self, name: str, type: str):
+    def __init__(self, name: str, type: Optional[str]):
         self.name = name
-        self.type = convertType(type)
+        self.type = type

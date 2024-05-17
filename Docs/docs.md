@@ -18,4 +18,6 @@ delete from < table > [where ...]
 - tableExistsError
 - columnExistsError
 - tableNotExists
+- columnNotExistsError
+- valueError
 - 

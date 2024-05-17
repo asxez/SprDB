@@ -4,7 +4,7 @@
 # @Time    : 2024/4/25 上午8:41
 # @Author  : ASXE
 
-from typing import Any, List
+from typing import Any, List, Optional
 
 
 class SerializedInterface:
@@ -33,28 +33,32 @@ class BPlusTreeNode:
         self.keys: List[Any] = []
         self.children: List[BPlusTreeNode] = []
         self.isLeaf: bool = True
+        self.next: Optional[BPlusTreeNode] = None  # 用于叶子节点的链表链接
 
     def split(self):
         midIndex = len(self.keys) // 2
-        midKey = self.keys[midIndex]
+        midKey = self.keys[midIndex][0]
 
         leftChild = BPlusTreeNode(self.order)
         rightChild = BPlusTreeNode(self.order)
 
         leftChild.keys = self.keys[:midIndex]
-        rightChild.keys = self.keys[midIndex + 1:]
+        rightChild.keys = self.keys[midIndex:]
 
         if not self.isLeaf:
             leftChild.children = self.children[:midIndex + 1]
             rightChild.children = self.children[midIndex + 1:]
             leftChild.isLeaf = rightChild.isLeaf = False
+        else:
+            rightChild.next = self.next
+            self.next = rightChild
 
         return midKey, leftChild, rightChild
 
     def insertNonFull(self, key, value):
         if self.isLeaf:
             self.keys.append((key, value))
-            self.keys.sort(key=lambda x: x[0])
+            self.keys.sort(key=lambda x: x[0])  # 只对键进行排序
         else:
             for i in range(len(self.keys)):
                 if key < self.keys[i][0]:
@@ -66,7 +70,7 @@ class BPlusTreeNode:
             if len(child.keys) == self.order - 1:
                 midKey, leftChild, rightChild = child.split()
                 self.keys.append((midKey, None))
-                self.keys.sort(key=lambda x: x[0])
+                self.keys.sort(key=lambda x: x[0])  # 只对键进行排序
                 self.children = self.children[:self.children.index(child)] + [leftChild, rightChild] + self.children[
                                                                                                        self.children.index(
                                                                                                            child) + 1:]
@@ -89,11 +93,35 @@ class BPlusTreeNode:
             else:
                 self.children[-1].remove(key)
 
-        if len(self.keys) < (self.order - 1) // 2:
-            self.rebalanced()
+    def search(self, key):
+        if self.isLeaf:
+            for k, v in self.keys:
+                if k == key:
+                    return v
+            return None
+        for i in range(len(self.keys)):
+            if key < self.keys[i][0]:
+                return self.children[i].search(key)
+        return self.children[-1].search(key)
 
-    def rebalanced(self):
-        pass
+    def searchRange(self, keyStart, keyEnd):
+        result = []
+        currentNode = self
+        while not currentNode.isLeaf:
+            for i in range(len(currentNode.keys)):
+                if keyStart < currentNode.keys[i][0]:
+                    currentNode = currentNode.children[i]
+                    break
+            else:
+                currentNode = currentNode.children[-1]
+
+        while currentNode:
+            for k, v in currentNode.keys:
+                if keyStart <= k <= keyEnd:
+                    result.append(v)
+            currentNode = currentNode.next
+
+        return result
 
 
 class BPlusTree:
@@ -113,44 +141,16 @@ class BPlusTree:
 
         self.root.insertNonFull(key, value)
 
-    def search(self, key):
-        currentNode = self.root
-        while not currentNode.isLeaf:
-            for i in range(len(currentNode.keys)):
-                if key < currentNode.keys[i][0]:
-                    currentNode = currentNode.children[i]
-                    break
-            else:
-                currentNode = currentNode.children[-1]
-
-        for k, v in currentNode.keys:
-            if k == key:
-                return v
-        return None
-
-    def searchRange(self, keyStart, keyEnd):
-        result = []
-        currentNode = self.root
-        while not currentNode.isLeaf:
-            for i in range(len(currentNode.keys)):
-                if keyStart < currentNode.keys[i][0]:
-                    currentNode = currentNode.children[i]
-                    break
-            else:
-                currentNode = currentNode.children[-1]
-
-        while currentNode:
-            for k, v in currentNode.keys:
-                if keyStart <= k <= keyEnd:
-                    result.append(v)
-            currentNode = currentNode.children[-1] if currentNode.children else None
-
-        return result
-
     def remove(self, key):
         self.root.remove(key)
-        if not self.root.keys and self.root.children:
+        if not self.root.keys and not self.root.isLeaf:
             self.root = self.root.children[0]
+
+    def search(self, key):
+        return self.root.search(key)
+
+    def searchRange(self, keyStart, keyEnd):
+        return self.root.searchRange(keyStart, keyEnd)
 
 
 def convertType(type: str):

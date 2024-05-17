@@ -399,10 +399,11 @@ class SyntaxParser:
         columns = []
         if curToken.tokenType == TokenType.TOKEN_STAR:
             columns.append('*')
+            self.__lexParser.getNextToken()
         else:  # 解析列名列表
             while True:
                 columns.append(self.__lexParser.curToken.value)
-                self.__lexParser.getNextToken()  # 此处，若后面已经不是逗号，则列名已解析完成，目前已经读到from
+                self.__lexParser.getNextToken()  # 此处，若后面已经不是逗号，则列名已解析完成，目前应该读到from（这句执行后）
                 if self.__lexParser.curToken.tokenType != TokenType.TOKEN_COMMA:
                     break
                 self.__lexParser.getNextToken()
@@ -607,10 +608,13 @@ class SyntaxParser:
 
 
 if __name__ == '__main__':
-    # parser = LexParser("insert into a values (1,2,3),(3,4,4)")
-    # parser.getNextToken()
-    # while parser.curToken.tokenType != TokenType.TOKEN_END:
-    #     print((parser.curToken.value, parser.curToken.tokenType, parser.preToken.tokenType))
-    #     parser.getNextToken()
     sparser = SyntaxParser("create table a (b INT , c float)")
+    sparser1 = SyntaxParser('insert into a (b,c) values (1,2.1),(1,2)')
+    sparser2 = SyntaxParser('select * from a where a=1 and b=1')
+    sparser3 = SyntaxParser('update a set b=1, c=1 where c=2 or d=2.3')
+    sparser4 = SyntaxParser('delete from a where a=1 or b=1')
     print(sparser.parse())
+    print(sparser1.parse())
+    print(sparser2.parse())
+    print(sparser3.parse())
+    print(sparser4.parse())
