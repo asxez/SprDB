@@ -12,19 +12,15 @@ from typing import Any, Dict
 
 class Row:
     def __init__(self):
-        self.values: Dict[str, Any] = {}
+        self.values: Dict[str, Any] = {} # 值
 
-    def setValue(self, columnName: str, value: Any):
+    def setValue(self, columnName: str, value: Any) -> None:
+        """存值"""
         self.values[columnName] = value
 
     def getValue(self, columnName: str) -> Any:
+        """取值"""
         return self.values.get(columnName)
-
-    def matchCondition(self, condition: Dict[str, Any]) -> bool:
-        for columnName, columnValue in condition.items():
-            if self.values.get(columnName) != columnValue:
-                return False
-        return True
 
     def serialized(self) -> bytes:
         """序列化行数据"""

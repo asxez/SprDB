@@ -5,16 +5,16 @@
 # @Author  : ASXE
 
 import pickle
-from typing import List, Dict, Any
+from typing import List
 
-from row import Row
+from .row import Row
 
 
 class Page:
     """页结构"""
 
     def __init__(self):
-        self.rowMax = 258
+        self.rowMax = 258 # 每页的最大行数
         self.rows: List[Row] = []
 
     def __len__(self):
@@ -24,20 +24,12 @@ class Page:
         return row in self.rows
 
     def addRow(self, row: Row):
+        """添加一行"""
         if len(self) < self.rowMax:
             self.rows.append(row)
 
     def __iter__(self):
         return iter(self.rows)
-
-    def deleteRow(self, row: Row):
-        """删除特定行"""
-        if row in self.rows:
-            self.rows.remove(row)
-
-    def deleteRows(self, condition: Dict[str, Any]):
-        """删除符合条件的行"""
-        self.rows = [row for row in self.rows if not row.matchCondition(condition)]
 
     def serialized(self) -> bytes:
         """序列化页数据"""

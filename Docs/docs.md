@@ -5,7 +5,7 @@ create table < table > (< column > type, ...)
 
 select * | < column > from < table > [where ...]
 
-insert into < table >  [(id, name, age, grade)] values(...) [,(...)]
+insert into < table >  [(column, ...)] values(...) [,(...)]
 
 update < table > set < column=..., ... > [where ...]
 

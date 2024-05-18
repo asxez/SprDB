@@ -151,12 +151,3 @@ class BPlusTree:
 
     def searchRange(self, keyStart, keyEnd):
         return self.root.searchRange(keyStart, keyEnd)
-
-
-def convertType(type: str):
-    if type.lower() == 'int':
-        return int()
-    elif type.lower() == 'float':
-        return float()
-    elif type.lower() == 'str':
-        return str()

@@ -136,7 +136,7 @@ class LexParser:
                 self.__curPosition += 1
             self.curToken.tokenType = TokenType.TOKEN_NUM
             self.curToken.length = len(num)
-            self.curToken.value = num
+            self.curToken.value = float(num) if '.' in num else int(num)
 
         elif self.__sourceCode[self.__curPosition] == "'":  # 识别字符串
             self.__curPosition += 1  # 跳过当前的"'"
@@ -611,8 +611,8 @@ if __name__ == '__main__':
     sparser = SyntaxParser("create table a (b INT , c float)")
     sparser1 = SyntaxParser('insert into a (b,c) values (1,2.1),(1,2)')
     sparser2 = SyntaxParser('select * from a where a=1 and b=1')
-    sparser3 = SyntaxParser('update a set b=1, c=1 where c=2 or d=2.3')
-    sparser4 = SyntaxParser('delete from a where a=1 or b=1')
+    sparser3 = SyntaxParser('update a set b=1, c=\'1\' where c=2 or d=2.3')
+    sparser4 = SyntaxParser('delete from a where (a=1 and b=1) or c=3')
     print(sparser.parse())
     print(sparser1.parse())
     print(sparser2.parse())
