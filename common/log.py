@@ -31,7 +31,7 @@ def error(errorMessage='', errorType=''):
     row = stack.lineno
     # 输出红色文本
     print(
-        f"\033[91m{errorType.title()}:\033[3m  \033[91m{errorMessage}\n{file_name} in {function} \033[35m{row} \033[91mrow\033[0m")
+        f"\033[91m{errorType}:\033[3m  \033[91m{errorMessage}\n{file_name} in {function} \033[35m{row} \033[91mrow\033[0m")
     sys.exit(1)
 
 def info(info=''):

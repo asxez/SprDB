@@ -35,6 +35,9 @@ class Table(SerializedInterface):
 
     def insert(self, columns: List[str], rows: List[List[Any]]) -> None:
         """插入数据"""
+        if columns == ['*']:
+            columns = [column for column in self.__columnObj.keys()]
+
         if len(columns) != len(rows[0]):
             log.error("Number of columns doesn't match number of values", 'valueError')
 
@@ -194,30 +197,3 @@ class Table(SerializedInterface):
         self.__columnObj = obj['columns']
         self.__pages = [Page().deserialized(page) for page in obj['pages']]
         self.__index = obj['index']
-
-
-if __name__ == '__main__':
-    table = Table("a", [("a", "int"), ("b", "int"), ("c", "str"), ("d", "float")])
-    table.insert(['a', 'b', 'c'], [[1, 2, 'test'], [2, 2, 'example'], [1, 3, 'sample']])
-    table.insert(['a', 'b', 'c'], [[1, 2, 'test'], [2, 2, 'example'], [1, 3, 'sample']])
-    table.insert(['a', 'b', 'c'], [[1, 2, 'test'], [2, 2, 'example'], [1, 3, 'sample']])
-    table.insert(['a', 'b', 'c'], [[1, 2, 'test'], [2, 2, 'example'], [1, 3, 'sample']])
-    table.insert(['a', 'b', 'c', 'd'], [[10, 23, 'asxe', 12.1]])
-    selectQuery = {'SELECT': {'columns': ['a', 'b'], 'from': 'a',
-                              'where': [('a', '=', 10), 'or', ('b', '=', 2)]}}
-    selectedRows = table.select(selectQuery['SELECT'])
-    for row in selectedRows:
-        print(f'select: {row}')
-
-    updateQuery = {'UPDATE': {'table': 'a', 'set': [('b', 10), ('c', 'updated')],
-                              'where': [('a', '=', 1), 'and', ('b', '=', 2)]}}
-    table.update(updateQuery['UPDATE'])
-    selectedRows = table.select({'columns': ['*'], 'from': 'a'})
-    for row in selectedRows:
-        print(f'update: {row}')
-
-    deleteQuery = {'DELETE': {'table': 'a', 'where': [('a', '=', 1), 'or', ('b', '=', 10)]}}
-    table.delete(deleteQuery['DELETE'])
-    selectedRows = table.select({'columns': ['*'], 'from': 'a'})
-    for row in selectedRows:
-        print(f'delete: {row}')

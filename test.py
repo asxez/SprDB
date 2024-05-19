@@ -9,6 +9,7 @@ this is a test file.
 """
 
 from parser import parser
+from core import Table
 
 
 def testLexParser():
@@ -33,6 +34,35 @@ def testSyntaxParser():
     sparser6 = parser.SyntaxParser("delete from t where a=1")
     print(sparser6.parse())
 
+
+def testCore():
+    table = Table("a", [("a", "int"), ("b", "int"), ("c", "str"), ("d", "float")])
+    table.insert(['a', 'b', 'c'], [[1, 2, 'test'], [2, 2, 'example'], [1, 3, 'sample']])
+    table.insert(['a', 'b', 'c'], [[1, 2, 'test'], [2, 2, 'example'], [1, 3, 'sample']])
+    table.insert(['a', 'b', 'c'], [[1, 2, 'test'], [2, 2, 'example'], [1, 3, 'sample']])
+    table.insert(['a', 'b', 'c'], [[1, 2, 'test'], [2, 2, 'example'], [1, 3, 'sample']])
+    table.insert(['a', 'b', 'c', 'd'], [[10, 23, 'asxe', 12.1]])
+    selectQuery = {'SELECT': {'columns': ['a', 'b'], 'from': 'a',
+                              'where': [('a', '=', 10), 'or', ('b', '=', 2)]}}
+    selectedRows = table.select(selectQuery['SELECT'])
+    for row in selectedRows:
+        print(f'select: {row}')
+
+    updateQuery = {'UPDATE': {'table': 'a', 'set': [('b', 10), ('c', 'updated')],
+                              'where': [('a', '=', 1), 'and', ('b', '=', 2)]}}
+    table.update(updateQuery['UPDATE'])
+    selectedRows = table.select({'columns': ['*'], 'from': 'a'})
+    for row in selectedRows:
+        print(f'update: {row}')
+
+    deleteQuery = {'DELETE': {'table': 'a', 'where': [('a', '=', 1), 'or', ('b', '=', 10)]}}
+    table.delete(deleteQuery['DELETE'])
+    selectedRows = table.select({'columns': ['*'], 'from': 'a'})
+    for row in selectedRows:
+        print(f'delete: {row}')
+
+
 if __name__ == '__main__':
     testLexParser()
     testSyntaxParser()
+    testCore()
