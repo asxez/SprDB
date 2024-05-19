@@ -3,19 +3,19 @@
 #
 # @Time    : 2024/4/30 下午1:36
 # @Author  : ASXE
-
+import lzma
 import pickle
 import threading
 from typing import Tuple, List, Dict, Any, Optional, AnyStr
 
 from common import log
 from .column import Column
-from .core import SerializedInterface, BPlusTree
+from .core import SerializedInterface, CompressInterface, BPlusTree
 from .page import Page
 from .row import Row
 
 
-class Table(SerializedInterface):
+class Table(SerializedInterface, CompressInterface):
     """表结构"""
 
     def __init__(self, name: str, columns: Optional[List[Tuple[str, str]]] = None):
@@ -35,10 +35,10 @@ class Table(SerializedInterface):
 
     def insert(self, columns: List[str], rows: List[List[Any]]) -> None:
         """插入数据"""
-        if columns == ['*']:
+        if columns == ['*']: # 若是 * 则更新为所有列名
             columns = [column for column in self.__columnObj.keys()]
 
-        if len(columns) != len(rows[0]):
+        if len(columns) != len(rows[0]): # 检测插入的数据与需要插入数据的列的数量是否匹配
             log.error("Number of columns doesn't match number of values", 'valueError')
 
         with self.__lock:
@@ -76,7 +76,7 @@ class Table(SerializedInterface):
 
                 for columnName, columnValue in rowValues.items():
                     if columnValue is not None:
-                        self.__index[columnName].insert(columnValue, newRow)
+                        self.__index[columnName].insert(columnValue, newRow) # 更新索引
 
                 currentPage = self.__pages[-1]
                 if len(currentPage) >= currentPage.rowMax:
@@ -128,13 +128,13 @@ class Table(SerializedInterface):
     def select(self, query: Dict[AnyStr, Any]) -> List[Row | dict]:
         """选择符合条件的行"""
         with self.__lock:
-            if 'where' in query:
+            if 'where' in query: # 如有 where 子句
                 condition = query['where']
                 conditionFn = self.parseCondition(condition)
             else:
                 conditionFn = lambda row: True
 
-            columns2Select = query['columns']
+            columns2Select = query['columns'] # 只需要返回指定列
             selectedRows = []
             for page in self.__pages:
                 for row in page.rows:
@@ -151,7 +151,7 @@ class Table(SerializedInterface):
         """更新符合条件的行"""
         with self.__lock:
             condition = query['where']
-            conditionFn = self.parseCondition(condition)
+            conditionFn = self.parseCondition(condition) # 解析 where 子句
             setClause = query['set']
 
             for page in self.__pages:
@@ -167,6 +167,7 @@ class Table(SerializedInterface):
     def delete(self, query: Dict[AnyStr, Any]) -> None:
         """删除符合条件的行"""
         with self.__lock:
+            # 解析 where 子句
             condition = query['where']
             conditionFn = self.parseCondition(condition)
 
@@ -197,3 +198,11 @@ class Table(SerializedInterface):
         self.__columnObj = obj['columns']
         self.__pages = [Page().deserialized(page) for page in obj['pages']]
         self.__index = obj['index']
+
+    def compress(self, data: bytes) -> bytes:
+        """压缩数据"""
+        return lzma.compress(data)
+
+    def decompress(self, data: bytes) -> bytes:
+        """解压数据"""
+        return lzma.decompress(data)

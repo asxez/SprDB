@@ -5,37 +5,33 @@
 # @Author  : ASXE
 
 import lzma
-import pickle
 import sys
-from typing import Dict, Optional
+from typing import Dict
 
 from common import log
 from core.database import Database, createDatabase
 from core.table import Table
 from parser import parser
 
-# TODO
-
-thisDatabase: Optional[Database] = Database('asxe')
+thisDatabase: Database = Database('sprdb')
 
 
 def writeNewData(tableName: str, table: Table):
+    """为表写入新数据"""
     with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'wb') as file:
-        data = thisDatabase.compress(thisDatabase.serialized(table.serialized()))
+        data = table.compress(table.serialized())
         file.write(data)
 
 
 def main(syntax: Dict[str, Dict]):
+    """入口"""
     global thisDatabase
-    if 'CREATE_DATABASE' in syntax:
+    if 'CREATE_DATABASE' in syntax:  # 创建数据库
         dbInfo = syntax['CREATE_DATABASE']
         createDatabase(dbInfo['databaseName'])
         thisDatabase = Database(dbInfo['databaseName'])
 
-    elif 'CREATE_TABLE' in syntax:
-        if thisDatabase is None:
-            log.error()
-
+    elif 'CREATE_TABLE' in syntax:  # 创建表
         tableInfo = syntax['CREATE_TABLE']
         thisDatabase.createTable(tableInfo['tableName'], tableInfo['columns'])
 
@@ -45,77 +41,66 @@ def main(syntax: Dict[str, Dict]):
     elif 'DROP_TABLE' in syntax:
         ...
 
-    elif 'INSERT' in syntax:
-        if thisDatabase is None:
-            log.error()
-
+    elif 'INSERT' in syntax:  # 插入数据
         insertInfo = syntax['INSERT']
         tableName = insertInfo['table']
         values = insertInfo['values']
         columns = insertInfo['columns']
+        table = Table(tableName)
 
         with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'rb') as file:
             data = file.read()
-            data = lzma.decompress(data)
-            data = pickle.loads(data)
-        table = Table(tableName)
+            data = table.decompress(data)
+
         table.deserialized(data)
         table.insert(columns, values)
 
         writeNewData(tableName, table)
 
-    elif 'SELECT' in syntax:
-        if thisDatabase is None:
-            log.error()
-
+    elif 'SELECT' in syntax:  # 查询
         selectInfo = syntax['SELECT']
         tableName = selectInfo['from']
+        table = Table(tableName)
+
         with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'rb') as file:
             data = file.read()
-            data = lzma.decompress(data)
-            data = pickle.loads(data)
-        table = Table(tableName)
+            data = table.decompress(data)
+
         table.deserialized(data)
         rows = table.select(selectInfo)
         for row in rows:
             print(row)
 
-    elif 'UPDATE' in syntax:
-        if thisDatabase is None:
-            log.error()
-
+    elif 'UPDATE' in syntax:  # 更新
         updateInfo = syntax['UPDATE']
         tableName = updateInfo['table']
+        table = Table(tableName)
+
         with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'rb') as file:
             data = file.read()
-            data = lzma.decompress(data)
-            data = pickle.loads(data)
+            data = table.decompress(data)
 
-        table = Table(tableName)
         table.deserialized(data)
         table.update(updateInfo)
 
         writeNewData(tableName, table)
 
-    elif 'DELETE' in syntax:
-        if thisDatabase is None:
-            log.error()
-
+    elif 'DELETE' in syntax:  # 删除
         deleteInfo = syntax['DELETE']
         tableName = deleteInfo['table']
+        table = Table(tableName)
+
         with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'rb') as file:
             data = file.read()
-            data = lzma.decompress(data)
-            data = pickle.loads(data)
+            data = table.decompress(data)
 
-        table = Table(tableName)
         table.deserialized(data)
         table.delete(deleteInfo)
 
         writeNewData(tableName, table)
 
     else:
-        log.error()
+        log.error('There is no such command.', 'syntaxError')
 
 
 if __name__ == '__main__':

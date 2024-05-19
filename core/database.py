@@ -6,16 +6,15 @@
 
 import lzma
 import os
-import pickle
 import shutil
-from typing import List, Tuple, Any
+from typing import List, Tuple
 
 from common import log
-from core import SerializedInterface, CompressInterface
+from core import SerializedInterface
 from .table import Table
 
 
-class Database(SerializedInterface, CompressInterface):
+class Database(SerializedInterface):
 
     def __init__(self, name: str):
         self.name = name
@@ -26,9 +25,11 @@ class Database(SerializedInterface, CompressInterface):
         if name in self.tables:
             log.error('Table already exists.', 'tableExistsError')
         self.tables.append(name)
+
+        # 创建表只需要初始化一个空表
         with lzma.open(f'./{self.name}/{name}.db', 'wb') as file:
             newTable = Table(name, columns)
-            data = self.compress(self.serialized(newTable.serialized()))
+            data = newTable.compress(newTable.serialized())
             file.write(data)
 
     def dropTable(self, name: str) -> None:
@@ -36,22 +37,6 @@ class Database(SerializedInterface, CompressInterface):
         if name not in self.tables:
             log.error('Table not exists.', 'tableNotExistsError')
         os.remove(f'{name}.db')
-
-    def serialized(self, data: Any) -> bytes:
-        """序列化"""
-        return pickle.dumps(data)
-
-    def deserialized(self, data: bytes) -> Any:
-        """反序列化"""
-        return pickle.loads(data)
-
-    def compress(self, data: bytes) -> bytes:
-        """压缩"""
-        return lzma.compress(data)
-
-    def decompress(self, data: bytes) -> bytes:
-        """解压缩"""
-        return lzma.decompress(data)
 
 
 def createDatabase(databaseName: str) -> Database:
