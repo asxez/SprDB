@@ -41,16 +41,19 @@ class Table(SerializedInterface, CompressInterface):
 
         if len(columns) != len(rows[0]):  # 检测插入的数据与需要插入数据的列的数量是否匹配
             log.error("Number of columns doesn't match number of values", 'valueError')
+            return
 
         with self.__lock:
             for rowData in rows:
                 if len(rowData) != len(columns):
                     log.error("Number of values in row doesn't match number of columns.", 'valueError')
+                    return
 
                 rowValues = {colName: None for colName in self.__columnObj}
                 for colName, colValue in zip(columns, rowData):
                     if colName not in self.__columnObj:
                         log.error(f"Column '{colName}' does not exist in table.", 'columnNotExistsError')
+                        return
 
                     column = self.__columnObj[colName]
                     if column.type == 'int':
@@ -58,17 +61,21 @@ class Table(SerializedInterface, CompressInterface):
                             colValue = int(colValue)
                         except ValueError:
                             log.error(f"Invalid value '{colValue}' for column '{colName}'. Expected int.", 'typeError')
+                            return
                     elif column.type == 'float':
                         try:
                             colValue = float(colValue)
                         except ValueError:
                             log.error(f"Invalid value '{colValue}' for column '{colName}'. Expected float.",
                                       'typeError')
+                            return
                     elif column.type == 'str':
                         if not isinstance(colValue, str):
                             log.error(f"Invalid value '{colValue}' for column '{colName}'. Expected str.", 'typeError')
+                            return
                     else:
                         log.error(f"Unsupported data type '{column.type}' for column '{colName}'", 'typeError')
+                        return
 
                     rowValues[colName] = colValue
 
@@ -105,6 +112,7 @@ class Table(SerializedInterface, CompressInterface):
                 return lambda row: row.getValue(column) >= value
             else:
                 log.error(f"Unsupported operator: {operator}.", 'valueError')
+                return
 
         if not condition:
             return lambda row: True
@@ -123,6 +131,7 @@ class Table(SerializedInterface, CompressInterface):
                 return lambda row: left(row) or right(row)
             else:
                 log.error(f"Unsupported logical operator: {operator}.", 'valueError')
+                return
 
         return combineConditions(condition)
 

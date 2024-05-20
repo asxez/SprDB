@@ -15,14 +15,14 @@ from core.table import Table
 from parser import parser
 
 # 若系统数据库不存在则创建
-if not os.path.exists('sprdb'):
+if not os.path.exists('./data/sprdb'):
     createDatabase('sprdb')
 thisDatabase: Database = Database('sprdb')  # 默认
 
 
 def writeNewData(tableName: str, table: Table):
     """为表写入新数据"""
-    with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'wb') as file:
+    with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'wb') as file:
         data = table.compress(table.serialized())
         file.write(data)
 
@@ -55,7 +55,7 @@ def main(syntax: Dict[str, Dict]):
         columns = insertInfo['columns']
         table = Table(tableName)
 
-        with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'rb') as file:
+        with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
             data = file.read()
             data = table.decompress(data)
 
@@ -69,7 +69,7 @@ def main(syntax: Dict[str, Dict]):
         tableName = selectInfo['from']
         table = Table(tableName)
 
-        with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'rb') as file:
+        with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
             data = file.read()
             data = table.decompress(data)
 
@@ -83,7 +83,7 @@ def main(syntax: Dict[str, Dict]):
         tableName = updateInfo['table']
         table = Table(tableName)
 
-        with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'rb') as file:
+        with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
             data = file.read()
             data = table.decompress(data)
 
@@ -97,7 +97,7 @@ def main(syntax: Dict[str, Dict]):
         tableName = deleteInfo['table']
         table = Table(tableName)
 
-        with lzma.open(f'./{thisDatabase.name}/{tableName}.db', 'rb') as file:
+        with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
             data = file.read()
             data = table.decompress(data)
 
@@ -108,6 +108,7 @@ def main(syntax: Dict[str, Dict]):
 
     else:
         log.error('There is no such command.', 'syntaxError')
+        return
 
 
 if __name__ == '__main__':
