@@ -620,18 +620,3 @@ class SyntaxParser:
                 'databaseName': self.__lexParser.curToken.value
             }
         }
-
-
-if __name__ == '__main__':
-    sparser = SyntaxParser("create table a (b INT , c float)")
-    sparser1 = SyntaxParser('insert into a (b,c) values (1,2.1),(1,2)')
-    sparser2 = SyntaxParser('select * from a where a=1 and b=1')
-    sparser3 = SyntaxParser('update a set b=1, c=\'1\' where c=2 or d=2.3')
-    sparser4 = SyntaxParser('delete from a where (a=1 and b=1) or c=3')
-    sparser5 = SyntaxParser('use test')
-    print(sparser.parse())
-    print(sparser1.parse())
-    print(sparser2.parse())
-    print(sparser3.parse())
-    print(sparser4.parse())
-    print(sparser5.parse())
