@@ -10,3 +10,4 @@ from .core import SerializedInterface, CompressInterface
 from .page import Page
 from .row import Row
 from .table import Table
+from .database import createDatabase

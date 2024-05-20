@@ -183,7 +183,6 @@ class Table(SerializedInterface, CompressInterface):
                 page.rows = [row for row in page.rows if row not in rows2Delete]
 
     def serialized(self) -> bytes:
-        """序列化表数据"""
         data = {
             'name': self.name,
             'columns': self.__columnObj,
@@ -192,8 +191,7 @@ class Table(SerializedInterface, CompressInterface):
         }
         return pickle.dumps(data)
 
-    def deserialized(self, data: bytes):
-        """反序列化表数据"""
+    def deserialized(self, data: bytes) -> None:
         obj = pickle.loads(data)
         self.name = obj['name']
         self.__columnObj = obj['columns']
@@ -201,9 +199,7 @@ class Table(SerializedInterface, CompressInterface):
         self.__index = obj['index']
 
     def compress(self, data: bytes) -> bytes:
-        """压缩数据"""
         return lzma.compress(data)
 
     def decompress(self, data: bytes) -> bytes:
-        """解压数据"""
         return lzma.decompress(data)

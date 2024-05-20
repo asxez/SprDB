@@ -11,9 +11,11 @@ class SerializedInterface:
     """序列化接口"""
 
     def serialized(self, data):
+        """序列化表数据"""
         ...
 
     def deserialized(self, data):
+        """反序列化表数据"""
         ...
 
 
@@ -21,9 +23,11 @@ class CompressInterface:
     """压缩"""
 
     def compress(self, data):
+        """压缩数据"""
         ...
 
     def decompress(self, data):
+        """解压数据"""
         ...
 
 

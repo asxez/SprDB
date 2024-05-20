@@ -6,6 +6,7 @@
 
 import lzma
 import sys
+import os
 from typing import Dict
 
 from common import log
@@ -13,6 +14,9 @@ from core.database import Database, createDatabase, useDatabase
 from core.table import Table
 from parser import parser
 
+# 若系统数据库不存在则创建
+if not os.path.exists('sprdb'):
+    createDatabase('sprdb')
 thisDatabase: Database = Database('sprdb')  # 默认
 
 
@@ -41,7 +45,7 @@ def main(syntax: Dict[str, Dict]):
     elif 'DROP_TABLE' in syntax:
         ...
 
-    elif 'USE' in syntax: # 切换数据库
+    elif 'USE' in syntax:  # 切换数据库
         thisDatabase = useDatabase(syntax['USE']['databaseName'])
 
     elif 'INSERT' in syntax:  # 插入数据

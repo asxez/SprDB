@@ -9,7 +9,7 @@ this is a test file.
 """
 
 from common import log
-from core import Table
+from core import Table, createDatabase
 from parser import parser
 
 
@@ -83,6 +83,8 @@ def testCore():
     for row in selectedRows:
         print(f'delete: {row}')
 
+def testDatabase():
+    createDatabase('sprdb')
 
 if __name__ == '__main__':
     testLog()
