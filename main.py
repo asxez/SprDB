@@ -9,11 +9,11 @@ import sys
 from typing import Dict
 
 from common import log
-from core.database import Database, createDatabase
+from core.database import Database, createDatabase, useDatabase
 from core.table import Table
 from parser import parser
 
-thisDatabase: Database = Database('sprdb')
+thisDatabase: Database = Database('sprdb')  # 默认
 
 
 def writeNewData(tableName: str, table: Table):
@@ -40,6 +40,9 @@ def main(syntax: Dict[str, Dict]):
 
     elif 'DROP_TABLE' in syntax:
         ...
+
+    elif 'USE' in syntax: # 切换数据库
+        thisDatabase = useDatabase(syntax['USE']['databaseName'])
 
     elif 'INSERT' in syntax:  # 插入数据
         insertInfo = syntax['INSERT']
@@ -104,6 +107,7 @@ def main(syntax: Dict[str, Dict]):
 
 
 if __name__ == '__main__':
+    print('Copyright (c) 2024 SprDB Software Foundation. All Rights Reserved.')
     print("sprDB >>> ", end='')
     while True:
         statement = input('')

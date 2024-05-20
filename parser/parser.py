@@ -6,7 +6,7 @@
 
 
 from enum import Enum, auto
-from typing import Any
+from typing import Any, List, Dict
 
 from common import log
 
@@ -34,6 +34,7 @@ class TokenType(Enum):
     TOKEN_FLOAT = auto()  # float
     TOKEN_BOOL = auto()  # bool
     TOKEN_NULL = auto()  # null
+    TOKEN_USE = auto()  # use
 
     TOKEN_MORE = auto()  # >
     TOKEN_MORE_EQUAL = auto()  # >=
@@ -70,7 +71,7 @@ class KeywordsToken:
         self.tokenType = tokenType  # 关键字token类型
 
 
-keywordsToken: list[KeywordsToken] = [
+keywordsToken: List[KeywordsToken] = [
     KeywordsToken("CREATE", TokenType.TOKEN_CREATE),
     KeywordsToken("TABLE", TokenType.TOKEN_TABLE),
     KeywordsToken("DATABASE", TokenType.TOKEN_DATABASE),
@@ -92,6 +93,7 @@ keywordsToken: list[KeywordsToken] = [
     KeywordsToken("INT", TokenType.TOKEN_INT),
     KeywordsToken("FLOAT", TokenType.TOKEN_FLOAT),
     KeywordsToken("BOOL", TokenType.TOKEN_BOOL),
+    KeywordsToken('USE', TokenType.TOKEN_USE),
 ]
 
 
@@ -262,10 +264,12 @@ class SyntaxParser:
             return self.__parseUpdate()
         elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_DELETE:
             return self.__parseDelete()
+        elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_USE:
+            return self.__parseUse()
         else:
             log.error('syntax is error.', 'syntaxError')
 
-    def __parseCreate(self) -> dict[str, dict[str, Any]]:
+    def __parseCreate(self) -> Dict[str, Dict[str, Any]]:
         """解析create命令"""
         self.__lexParser.getNextToken()  # 跳过create
         curToken = self.__lexParser.curToken
@@ -389,7 +393,7 @@ class SyntaxParser:
         else:
             log.error(f'unexpected token after expression:{self.__lexParser.curToken.value}', 'syntaxError')
 
-    def __parseSelect(self) -> dict[str, dict[str, Any]]:
+    def __parseSelect(self) -> Dict[str, Dict[str, Any]]:
         """解析select命令"""
         self.__lexParser.getNextToken()  # 跳过select
         curToken = self.__lexParser.curToken
@@ -436,7 +440,7 @@ class SyntaxParser:
 
         return syntaxTree
 
-    def __parseInsert(self) -> dict[str, dict[str, Any]]:
+    def __parseInsert(self) -> Dict[str, Dict[str, Any]]:
         """解析insert命令"""
         self.__lexParser.getNextToken()  # 跳过insert
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_INTO:
@@ -533,7 +537,7 @@ class SyntaxParser:
 
         return values
 
-    def __parseUpdate(self) -> dict[str, dict[str, str | list]]:
+    def __parseUpdate(self) -> Dict[str, Dict[str, str | List]]:
         """解析update命令"""
         self.__lexParser.getNextToken()  # 跳过update
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
@@ -583,7 +587,7 @@ class SyntaxParser:
 
         return syntaxTree
 
-    def __parseDelete(self) -> dict[str, dict[str, str | list]]:
+    def __parseDelete(self) -> Dict[str, Dict[str, str | List]]:
         """解析delete命令"""
         self.__lexParser.getNextToken()  # 跳过delete
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_FROM:
@@ -606,6 +610,17 @@ class SyntaxParser:
 
         return syntaxTree
 
+    def __parseUse(self) -> Dict[str, Dict[str, str]]:
+        """解析use命令"""
+        self.__lexParser.getNextToken()  # 跳过use
+        if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
+            log.error(f'expect database name after "{self.__lexParser.preToken.value}"', 'syntaxError')
+        return {
+            'USE': {
+                'databaseName': self.__lexParser.curToken.value
+            }
+        }
+
 
 if __name__ == '__main__':
     sparser = SyntaxParser("create table a (b INT , c float)")
@@ -613,8 +628,10 @@ if __name__ == '__main__':
     sparser2 = SyntaxParser('select * from a where a=1 and b=1')
     sparser3 = SyntaxParser('update a set b=1, c=\'1\' where c=2 or d=2.3')
     sparser4 = SyntaxParser('delete from a where (a=1 and b=1) or c=3')
+    sparser5 = SyntaxParser('use test')
     print(sparser.parse())
     print(sparser1.parse())
     print(sparser2.parse())
     print(sparser3.parse())
     print(sparser4.parse())
+    print(sparser5.parse())

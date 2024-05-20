@@ -1,4 +1,6 @@
 ## 语法
+use < database >
+
 create database < database >
 
 create table < table > (< column > type, ...)

@@ -3,6 +3,7 @@
 #
 # @Time    : 2024/4/30 下午1:36
 # @Author  : ASXE
+
 import lzma
 import pickle
 import threading
@@ -35,10 +36,10 @@ class Table(SerializedInterface, CompressInterface):
 
     def insert(self, columns: List[str], rows: List[List[Any]]) -> None:
         """插入数据"""
-        if columns == ['*']: # 若是 * 则更新为所有列名
+        if columns == ['*']:  # 若是 * 则更新为所有列名
             columns = [column for column in self.__columnObj.keys()]
 
-        if len(columns) != len(rows[0]): # 检测插入的数据与需要插入数据的列的数量是否匹配
+        if len(columns) != len(rows[0]):  # 检测插入的数据与需要插入数据的列的数量是否匹配
             log.error("Number of columns doesn't match number of values", 'valueError')
 
         with self.__lock:
@@ -76,7 +77,7 @@ class Table(SerializedInterface, CompressInterface):
 
                 for columnName, columnValue in rowValues.items():
                     if columnValue is not None:
-                        self.__index[columnName].insert(columnValue, newRow) # 更新索引
+                        self.__index[columnName].insert(columnValue, newRow)  # 更新索引
 
                 currentPage = self.__pages[-1]
                 if len(currentPage) >= currentPage.rowMax:
@@ -128,13 +129,13 @@ class Table(SerializedInterface, CompressInterface):
     def select(self, query: Dict[AnyStr, Any]) -> List[Row | dict]:
         """选择符合条件的行"""
         with self.__lock:
-            if 'where' in query: # 如有 where 子句
+            if 'where' in query:  # 如有 where 子句
                 condition = query['where']
                 conditionFn = self.parseCondition(condition)
             else:
                 conditionFn = lambda row: True
 
-            columns2Select = query['columns'] # 只需要返回指定列
+            columns2Select = query['columns']  # 只需要返回指定列
             selectedRows = []
             for page in self.__pages:
                 for row in page.rows:
@@ -151,7 +152,7 @@ class Table(SerializedInterface, CompressInterface):
         """更新符合条件的行"""
         with self.__lock:
             condition = query['where']
-            conditionFn = self.parseCondition(condition) # 解析 where 子句
+            conditionFn = self.parseCondition(condition)  # 解析 where 子句
             setClause = query['set']
 
             for page in self.__pages:

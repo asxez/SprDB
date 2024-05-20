@@ -50,3 +50,8 @@ def createDatabase(databaseName: str) -> Database:
 def dropDatabase(databaseName: str) -> None:
     """删除数据库"""
     shutil.rmtree(databaseName)
+
+
+def useDatabase(databaseName: str) -> Database:
+    """切换数据库"""
+    return Database(databaseName)
