@@ -7,7 +7,7 @@
 from .column import Column
 from .core import SerializedInterface, BPlusTree
 from .core import SerializedInterface, CompressInterface
+from .database import createDatabase
 from .page import Page
 from .row import Row
 from .table import Table
-from .database import createDatabase
