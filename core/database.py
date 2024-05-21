@@ -35,7 +35,7 @@ class Database(SerializedInterface, CompressInterface):
             log.error('Table already exists.', 'tableExistsError')
             return
 
-        if name != systemTable: # 将用户创建的表名插入系统表以记录
+        if name != systemTable:  # 将用户创建的表名插入系统表以记录
             self.tables.append(name)
             table = Table(systemTable)
             with lzma.open(f'./data/{self.name}/{systemTable}.db', 'rb') as file:
@@ -83,4 +83,6 @@ def dropDatabase(databaseName: str) -> None:
 
 def useDatabase(databaseName: str) -> Database:
     """切换数据库"""
-    return Database(databaseName)
+    if os.path.exists(f'./data/{databaseName}'):
+        return Database(databaseName)
+    log.error('There is no such database.', 'databaseNotExistsError')

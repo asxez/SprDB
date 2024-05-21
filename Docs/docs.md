@@ -7,7 +7,7 @@ create table < table > (< column > type, ...)
 
 select * | < column > from < table > [where ...]
 
-insert into < table >  [(column, ...)] values(...) [,(...)]
+insert into < table >  [(column, ...)] values (...) [,(...)]
 
 update < table > set < column=..., ... > [where ...]
 
@@ -17,6 +17,7 @@ delete from < table > [where ...]
 - syntaxError
 - typeError
 - databaseExistsError
+- databaseNotExistsError
 - tableExistsError
 - columnExistsError
 - tableNotExists

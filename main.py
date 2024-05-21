@@ -116,12 +116,28 @@ def main(syntax: Dict[str, Dict]):
 
 if __name__ == '__main__':
     print('Copyright (c) 2024 SprDB Software Foundation. All Rights Reserved.')
-    print("sprDB >>> ", end='')
+    print('Type "help" for more information.')
     while True:
+        print("sprDB >>> ", end='')
         statement = input('')
         if statement == 'exit':
             print('Good Bye!')
             sys.exit(0)
+        elif statement == 'help':
+            helps = [
+                "use < database >",
+                "create database < database >",
+                "create table < table > (< column > type, ...)",
+                "select * | < column > from < table > [where ...]",
+                "insert into < table >  [(column, ...)] values (...) [,(...)]",
+                "update < table > set < column=..., ... > [where ...]",
+                "delete from < table > [where ...]"
+            ]
+            for help in helps:
+                print(help)
+            continue
         parse = parser.SyntaxParser(statement)
-        main(parse.parse())
-        print("sprDB >>> ", end='')
+        try:
+            main(parse.parse())
+        except:
+            pass
