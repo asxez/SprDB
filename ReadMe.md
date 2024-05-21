@@ -5,12 +5,12 @@ The sprDB is under development...
 ## Build Instructions
 on Windows:
 ```bash
-pyinstaller -F -c main.py
+pyinstaller -F -c -i spr.ico main.py
 ```
 
 on Linux:
 ```bash
-pyinstaller -F main.py
+pyinstaller -F -i spr.ico main.py
 ```
 
-then you should go to terminal to run it.
+Then you will get a `dist` folder with an executable file that can be run by double-clicking or using the terminal command.
