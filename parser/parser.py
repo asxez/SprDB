@@ -4,11 +4,15 @@
 # @Time    : 2024/4/20 20:39
 # @Author  : ASXE
 
-
+import lzma
+import os
 from enum import Enum, auto
 from typing import Any, List, Dict, Optional
 
-from common import log
+from common import log, OutputTable
+from core import Row
+from core.database import createDatabase, useDatabase, Database
+from core.table import Table
 
 
 class TokenType(Enum):
@@ -657,3 +661,108 @@ class SyntaxParser:
                 'databaseName': self.__lexParser.curToken.value
             }
         }
+
+
+# 若系统数据库不存在则创建
+if not os.path.exists('./data/sprdb'):
+    createDatabase('sprdb')
+thisDatabase: Database = Database('sprdb')  # 默认
+
+
+class SemanticParser:
+    """语义分析器"""
+
+    @staticmethod
+    def writeNewData(tableName: str, table: Table) -> None:
+        """为表写入新数据"""
+        with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'wb') as file:
+            data = table.compress(table.serialized())
+            file.write(data)
+
+    def main(self, syntax: Dict[str, Dict], mode=0) -> List[Row | Dict] | None:
+        """入口"""
+        global thisDatabase
+        if 'CREATE_DATABASE' in syntax:  # 创建数据库
+            dbInfo = syntax['CREATE_DATABASE']
+            createDatabase(dbInfo['databaseName'])
+            thisDatabase = Database(dbInfo['databaseName'])
+
+        elif 'CREATE_TABLE' in syntax:  # 创建表
+            tableInfo = syntax['CREATE_TABLE']
+            thisDatabase.createTable(tableInfo['tableName'], tableInfo['columns'])
+
+        elif 'DROP_DATABASE' in syntax:
+            ...
+
+        elif 'DROP_TABLE' in syntax:
+            ...
+
+        elif 'USE' in syntax:  # 切换数据库
+            thisDatabase = useDatabase(syntax['USE']['databaseName'])
+
+        elif 'INSERT' in syntax:  # 插入数据
+            insertInfo = syntax['INSERT']
+            tableName = insertInfo['table']
+            values = insertInfo['values']
+            columns = insertInfo['columns']
+            table = Table(tableName)
+
+            with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
+                data = file.read()
+                data = table.decompress(data)
+
+            table.deserialized(data)
+            table.insert(columns, values)
+
+            self.writeNewData(tableName, table)
+
+        elif 'SELECT' in syntax:  # 查询
+            selectInfo = syntax['SELECT']
+            tableName = selectInfo['from']
+            table = Table(tableName)
+
+            with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
+                data = file.read()
+                data = table.decompress(data)
+
+            table.deserialized(data)
+            rows = table.select(selectInfo)
+            if mode != 0:
+                return rows
+            try:
+                output = OutputTable(rows)
+            except:
+                return
+            print(output)
+
+        elif 'UPDATE' in syntax:  # 更新
+            updateInfo = syntax['UPDATE']
+            tableName = updateInfo['table']
+            table = Table(tableName)
+
+            with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
+                data = file.read()
+                data = table.decompress(data)
+
+            table.deserialized(data)
+            table.update(updateInfo)
+
+            self.writeNewData(tableName, table)
+
+        elif 'DELETE' in syntax:  # 删除
+            deleteInfo = syntax['DELETE']
+            tableName = deleteInfo['table']
+            table = Table(tableName)
+
+            with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
+                data = file.read()
+                data = table.decompress(data)
+
+            table.deserialized(data)
+            table.delete(deleteInfo)
+
+            self.writeNewData(tableName, table)
+
+        else:
+            log.error('There is no such command.', 'syntaxError')
+            return
