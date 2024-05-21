@@ -67,7 +67,7 @@ class Database(SerializedInterface, CompressInterface):
 
 def createDatabase(databaseName: str) -> Optional[Database]:
     """创建数据库"""
-    if os.path.exists(databaseName):
+    if os.path.exists(f'./data/{databaseName}'):
         log.error('Database already exists.', 'databaseExistsError')
         return
     os.makedirs(f'./data/{databaseName}')
