@@ -8,7 +8,7 @@
 this is a test file.
 """
 
-from common import log
+from common import log, OutputTable
 from core import Table, createDatabase
 from parser import parser
 
@@ -83,11 +83,24 @@ def testCore():
     for row in selectedRows:
         print(f'delete: {row}')
 
+
 def testDatabase():
     createDatabase('sprdb')
+
+
+def testOutPut():
+    data = [
+        {"Name": "1", "Age": 19, "City": "city1"},
+        {"Name": "2", "Age": 20, "City": "city2"},
+        {"Name": "3", "Age": 21, "City": "city3"}
+    ]
+    table = OutputTable(data)
+    print(table)
+
 
 if __name__ == '__main__':
     testLog()
     testLexParser()
     testSyntaxParser()
     testCore()
+    testOutPut()
