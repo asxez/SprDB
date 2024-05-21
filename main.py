@@ -9,7 +9,7 @@ import sys
 import os
 from typing import Dict
 
-from common import log
+from common import log, OutputTable
 from core.database import Database, createDatabase, useDatabase
 from core.table import Table
 from parser import parser
@@ -75,8 +75,11 @@ def main(syntax: Dict[str, Dict]):
 
         table.deserialized(data)
         rows = table.select(selectInfo)
-        for row in rows:
-            print(row)
+        try:
+            output = OutputTable(rows)
+        except:
+            return
+        print(output)
 
     elif 'UPDATE' in syntax:  # 更新
         updateInfo = syntax['UPDATE']
