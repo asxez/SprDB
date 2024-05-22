@@ -7,7 +7,7 @@
 import lzma
 import os
 import shutil
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 from common import log
 from .core import SerializedInterface, CompressInterface
@@ -29,11 +29,11 @@ class Database(SerializedInterface, CompressInterface):
             data = file.read()
         return self.deserialized(data)
 
-    def createTable(self, name: str, columns: List[Tuple[str, str]]) -> None:
+    def createTable(self, name: str, columns: List[Tuple[str, str]]) -> str:
         """创建表"""
         if name in self.tables:
             log.error('Table already exists.', 'tableExistsError')
-            return
+            return 'Table already exists.'
 
         if name != systemTable:  # 将用户创建的表名插入系统表以记录
             self.tables.append(name)
@@ -57,19 +57,19 @@ class Database(SerializedInterface, CompressInterface):
 
         self.__loadTables()
 
-    def dropTable(self, name: str) -> None:
+    def dropTable(self, name: str) -> str:
         """删除表"""
         if name not in self.tables:
             log.error('Table not exists.', 'tableNotExistsError')
-            return
+            return 'Table not exists.'
         os.remove(f'{name}.db')
 
 
-def createDatabase(databaseName: str) -> Optional[Database]:
+def createDatabase(databaseName: str) -> Database | str:
     """创建数据库"""
     if os.path.exists(f'./data/{databaseName}'):
         log.error('Database already exists.', 'databaseExistsError')
-        return
+        return 'Database already exists.'
     os.makedirs(f'./data/{databaseName}')
     database = Database(databaseName)
     database.createTable(systemTable, systemTableColumn)
@@ -81,8 +81,9 @@ def dropDatabase(databaseName: str) -> None:
     shutil.rmtree(databaseName)
 
 
-def useDatabase(databaseName: str) -> Database:
+def useDatabase(databaseName: str) -> Database | str:
     """切换数据库"""
     if os.path.exists(f'./data/{databaseName}'):
         return Database(databaseName)
     log.error('There is no such database.', 'databaseNotExistsError')
+    return 'There is no such database.'

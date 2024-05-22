@@ -16,7 +16,7 @@ from parser import parser
 
 def executeQuery(statement: str) -> List[Row | Dict] | None:
     syntax = parser.SyntaxParser(statement).parse()
-    return parser.SemanticParser().main(syntax)
+    return parser.SemanticParser().main(syntax, mode=1)
 
 
 def handleClient(clientSocket: socket.socket) -> None:
@@ -33,7 +33,7 @@ def handleClient(clientSocket: socket.socket) -> None:
         clientSocket.close()
 
 
-def startServer(ee: threading.Event, host='127.0.0.1', port=port) -> None:
+def startServer(ee: threading.Event, host='0.0.0.0', port=port) -> None:
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((host, port))
     server.listen(151)
