@@ -4,6 +4,8 @@
 # @Time    : 2024/5/20 下午6:21
 # @Author  : ASXE
 
+curdir = r'C:\sprDB'
+
 DEBUG = False
 
 port = 65432

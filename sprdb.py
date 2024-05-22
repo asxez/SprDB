@@ -7,7 +7,7 @@
 import sys
 
 from parser import parser
-
+from server.serve import startupServe
 
 def local():
     while True:
@@ -16,6 +16,9 @@ def local():
         if statement == 'exit':
             print('Good Bye!')
             break
+        elif statement == 'startup':
+            startupServe()
+            continue
         elif statement == 'help':
             helps = [
                 "use < database >",
@@ -38,7 +41,7 @@ def local():
 
 if __name__ == '__main__':
     print('Copyright (c) 2024 SprDB Software Foundation. All Rights Reserved.')
-    print('Type "help" for more information.')
+    print('Type "help", "exit", "startup" for more information.')
     try:
         local()
     except KeyboardInterrupt:

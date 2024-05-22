@@ -4,12 +4,13 @@
 # @Time    : 2024/5/21 下午3:27
 # @Author  : ASXE
 
-
 import socket
+import subprocess
 import threading
 from typing import List, Dict
 
 from common.config import port
+from common import log
 from core import Row
 from parser import parser
 
@@ -47,4 +48,25 @@ def startServer(host='0.0.0.0', port=port) -> None:
             clientHandler = threading.Thread(target=handleClient, args=(clientSocket,))
             clientHandler.start()
         except socket.timeout:
+            continue
+
+
+def startupServe():
+    """设置开机自启动"""
+    commandService = ['nssm.exe', 'install', 'sprserve', 'sprserve.exe']
+    result = subprocess.run(commandService, capture_output=True, text=True, encoding='gbk')
+    if result.returncode != 0:
+        log.error('Failed to set auto-start.', 'systemError')
+        return
+    log.info('Success, are you sure to restart your computer? (yes or no)')
+    while True:
+        choice = input()
+        if choice.lower() in ['yes', 'y']:
+            subprocess.run(['shutdown', '/r', '/t', '0'])
+        elif choice.lower() in ['no', 'n']:
+            log.warning(
+                "You haven't restarted your computer, so you'll need to manually go to the service to start it.")
+            break
+        else:
+            log.warning('Please input yes or no.')
             continue

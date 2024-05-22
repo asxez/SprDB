@@ -9,7 +9,7 @@ import os
 import shutil
 from typing import List, Tuple
 
-from common import log
+from common import log, curdir
 from .core import SerializedInterface, CompressInterface
 from .table import Table
 
@@ -24,32 +24,32 @@ class Database(SerializedInterface, CompressInterface):
 
     def createTable(self, name: str, columns: List[Tuple[str, str]]) -> str:
         """创建表"""
-        if os.path.exists(f'./data/{self.name}/{name}.db'):
+        if os.path.exists(f'{curdir}/data/{self.name}/{name}.db'):
             log.error('Table already exists.', 'tableExistsError')
             return 'Table already exists.'
 
         if name != systemTable:  # 将用户创建的表名插入系统表以记录
             table = Table(systemTable)
-            with lzma.open(f'./data/{self.name}/{systemTable}.db', 'rb') as file:
+            with lzma.open(f'{curdir}/data/{self.name}/{systemTable}.db', 'rb') as file:
                 data = file.read()
 
             data = table.decompress(data)
             table.deserialized(data)
             table.insert(['table'], [[name]])
 
-            with lzma.open(f'./data/{self.name}/{systemTable}.db', 'wb') as file:
+            with lzma.open(f'{curdir}/data/{self.name}/{systemTable}.db', 'wb') as file:
                 data = table.compress(table.serialized())
                 file.write(data)
 
         # 创建表只需要初始化一个空表
-        with lzma.open(f'./data/{self.name}/{name}.db', 'wb') as file:
+        with lzma.open(f'{curdir}/data/{self.name}/{name}.db', 'wb') as file:
             newTable = Table(name, columns)
             data = newTable.compress(newTable.serialized())
             file.write(data)
 
     def dropTable(self, name: str) -> str:
         """删除表"""
-        if not os.path.exists(f'./data/{self.name}/{name}.db'):
+        if not os.path.exists(f'{curdir}/data/{self.name}/{name}.db'):
             log.error('Table not exists.', 'tableNotExistsError')
             return 'Table not exists.'
         os.remove(f'{name}.db')
@@ -57,10 +57,10 @@ class Database(SerializedInterface, CompressInterface):
 
 def createDatabase(databaseName: str) -> Database | str:
     """创建数据库"""
-    if os.path.exists(f'./data/{databaseName}'):
+    if os.path.exists(f'{curdir}/data/{databaseName}'):
         log.error('Database already exists.', 'databaseExistsError')
         return 'Database already exists.'
-    os.makedirs(f'./data/{databaseName}')
+    os.makedirs(f'{curdir}/data/{databaseName}')
     database = Database(databaseName)
     database.createTable(systemTable, systemTableColumn)
     return Database(databaseName)
@@ -73,7 +73,7 @@ def dropDatabase(databaseName: str) -> None:
 
 def useDatabase(databaseName: str) -> Database | str:
     """切换数据库"""
-    if os.path.exists(f'./data/{databaseName}'):
+    if os.path.exists(f'{curdir}/data/{databaseName}'):
         return Database(databaseName)
     log.error('There is no such database.', 'databaseNotExistsError')
     return 'There is no such database.'

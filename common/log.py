@@ -13,11 +13,8 @@ from .config import DEBUG
 def warning(warningMessage: str):
     """传入警告信息"""
     stack = inspect.stack()[1]
-    fileName = stack.filename
-    function = stack.function
-    row = stack.lineno
     print(
-        f"\033[93mWarning:\033[3m \033[93m{warningMessage}\n{fileName} in {function} \033[35m{row} \033[93mrow\033[0m")
+        f"\033[93m\033[3m{warningMessage}\033[0m")
 
 
 def error(errorMessage: str, errorType: str):

@@ -5,3 +5,4 @@
 # @Author  : ASXE
 
 from .log import OutputTable
+from .config import curdir

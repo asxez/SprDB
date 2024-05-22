@@ -24,4 +24,5 @@ delete from < table > [where ...]
 - columnNotExistsError
 - valueError
 - pathNotExists
+- systemError
 - 

@@ -9,7 +9,7 @@ import os
 from enum import Enum, auto
 from typing import Any, List, Dict, Optional
 
-from common import log, OutputTable
+from common import log, OutputTable, curdir
 from core import Row
 from core.database import createDatabase, useDatabase, Database
 from core.table import Table
@@ -665,7 +665,7 @@ class SyntaxParser:
 
 
 # 若系统数据库不存在则创建
-if not os.path.exists('./data/sprdb'):
+if not os.path.exists(f'{curdir}/data/sprdb'):
     createDatabase('sprdb')
 thisDatabase: Database = Database('sprdb')  # 默认
 
@@ -676,7 +676,7 @@ class SemanticParser:
     @staticmethod
     def writeNewData(tableName: str, table: Table) -> None:
         """为表写入新数据"""
-        with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'wb') as file:
+        with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'wb') as file:
             data = table.compress(table.serialized())
             file.write(data)
 
@@ -714,11 +714,11 @@ class SemanticParser:
             columns = insertInfo['columns']
             table = Table(tableName)
 
-            if not os.path.exists(f'./data/{thisDatabase.name}/{tableName}.db'):
+            if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
                 log.error('There is no such table.', 'pathNotExists')
                 return 'There is no such table.'
 
-            with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
+            with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
                 data = file.read()
                 data = table.decompress(data)
 
@@ -732,11 +732,11 @@ class SemanticParser:
             tableName = selectInfo['from']
             table = Table(tableName)
 
-            if not os.path.exists(f'./data/{thisDatabase.name}/{tableName}.db'):
+            if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
                 log.error('There is no such table.', 'tableNotExists')
                 return 'There is no such table.'
 
-            with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
+            with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
                 data = file.read()
                 data = table.decompress(data)
 
@@ -755,11 +755,11 @@ class SemanticParser:
             tableName = updateInfo['table']
             table = Table(tableName)
 
-            if not os.path.exists(f'./data/{thisDatabase.name}/{tableName}.db'):
+            if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
                 log.error('There is no such table.', 'pathNotExists')
                 return 'There is no such table.'
 
-            with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
+            with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
                 data = file.read()
                 data = table.decompress(data)
 
@@ -773,11 +773,11 @@ class SemanticParser:
             tableName = deleteInfo['table']
             table = Table(tableName)
 
-            if not os.path.exists(f'./data/{thisDatabase.name}/{tableName}.db'):
+            if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
                 log.error('There is no such table.', 'pathNotExists')
                 return 'There is no such table.'
 
-            with lzma.open(f'./data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
+            with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
                 data = file.read()
                 data = table.decompress(data)
 
