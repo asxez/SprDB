@@ -33,12 +33,12 @@ def handleClient(clientSocket: socket.socket) -> None:
         clientSocket.close()
 
 
-def startServer(ee: threading.Event, host='0.0.0.0', port=port) -> None:
+def startServer(host='0.0.0.0', port=port) -> None:
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((host, port))
     server.listen(151)
 
-    while not ee.is_set():
+    while True:
         try:
             server.settimeout(0.5)
             clientSocket, addr = server.accept()

@@ -5,21 +5,16 @@
 # @Author  : ASXE
 
 import sys
-import threading
 
 from parser import parser
-from server.serve import startServer
-
-exitEvent = threading.Event()
 
 
-def local(ee: threading.Event):
-    while not ee.is_set():
+def local():
+    while True:
         print("sprDB >>> ", end='')
         statement = input('')
         if statement == 'exit':
             print('Good Bye!')
-            ee.set()
             break
         elif statement == 'help':
             helps = [
@@ -44,17 +39,8 @@ def local(ee: threading.Event):
 if __name__ == '__main__':
     print('Copyright (c) 2024 SprDB Software Foundation. All Rights Reserved.')
     print('Type "help" for more information.')
-    t1 = threading.Thread(target=startServer, args=(exitEvent,))
-    t2 = threading.Thread(target=local, args=(exitEvent,))
-    t1.start()
-    t2.start()
-
     try:
-        t1.join()
-        t2.join()
+        local()
     except KeyboardInterrupt:
         print("Terminating threads...")
-        exitEvent.set()
-        t1.join()
-        t2.join()
         sys.exit(0)
