@@ -21,22 +21,14 @@ class Database(SerializedInterface, CompressInterface):
 
     def __init__(self, name: str):
         self.name = name
-        self.tables = []
-
-    def __loadTables(self) -> None:
-        """加载表名列表"""
-        with lzma.open(f'./data/{self.name}/{systemTable}.db', 'rb') as file:
-            data = file.read()
-        return self.deserialized(data)
 
     def createTable(self, name: str, columns: List[Tuple[str, str]]) -> str:
         """创建表"""
-        if name in self.tables:
+        if os.path.exists(f'./data/{self.name}/{name}.db'):
             log.error('Table already exists.', 'tableExistsError')
             return 'Table already exists.'
 
         if name != systemTable:  # 将用户创建的表名插入系统表以记录
-            self.tables.append(name)
             table = Table(systemTable)
             with lzma.open(f'./data/{self.name}/{systemTable}.db', 'rb') as file:
                 data = file.read()
@@ -55,11 +47,9 @@ class Database(SerializedInterface, CompressInterface):
             data = newTable.compress(newTable.serialized())
             file.write(data)
 
-        self.__loadTables()
-
     def dropTable(self, name: str) -> str:
         """删除表"""
-        if name not in self.tables:
+        if not os.path.exists(f'./data/{self.name}/{name}.db'):
             log.error('Table not exists.', 'tableNotExistsError')
             return 'Table not exists.'
         os.remove(f'{name}.db')
