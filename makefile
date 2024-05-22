@@ -1,6 +1,6 @@
 PYINSTALLER=pyinstaller
 ICON=spr.ico
-MAIN_SCRIPT=main.py
+MAIN_SCRIPT=sprdb.py
 SPRSERVE_SCRIPT=sprserve.py
 
 all: main_exe_w sprserve_exe_w main_exe_l sprserve_exe_l
