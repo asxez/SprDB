@@ -9,7 +9,7 @@ import pickle
 import threading
 from typing import Tuple, List, Dict, Any, Optional, AnyStr
 
-from common import log
+from common import Logger
 from .column import Column
 from .core import SerializedInterface, CompressInterface, BPlusTree
 from .page import Page
@@ -19,7 +19,8 @@ from .row import Row
 class Table(SerializedInterface, CompressInterface):
     """表结构"""
 
-    def __init__(self, name: str, columns: Optional[List[Tuple[str, str]]] = None):
+    def __init__(self, name: str, columns: Optional[List[Tuple[str, str]]] = None, logger: Optional[Logger] = None):
+        self.logger = logger
         self.name = name
         self.__columnObj: Dict = {}  # 列对象
         self.__index: Dict[AnyStr, BPlusTree] = {}  # 索引
@@ -40,19 +41,19 @@ class Table(SerializedInterface, CompressInterface):
             columns = [column for column in self.__columnObj.keys()]
 
         if len(columns) != len(rows[0]):  # 检测插入的数据与需要插入数据的列的数量是否匹配
-            log.error("Number of columns doesn't match number of values.", 'valueError')
+            self.logger.error("Number of columns doesn't match number of values.", 'valueError')
             return "Number of columns doesn't match number of values."
 
         with self.__lock:
             for rowData in rows:
                 if len(rowData) != len(columns):
-                    log.error("Number of values in row doesn't match number of columns.", 'valueError')
+                    self.logger.error("Number of values in row doesn't match number of columns.", 'valueError')
                     return "Number of values in row doesn't match number of columns."
 
                 rowValues = {colName: None for colName in self.__columnObj}
                 for colName, colValue in zip(columns, rowData):
                     if colName not in self.__columnObj:
-                        log.error(f"Column '{colName}' does not exist in table.", 'columnNotExistsError')
+                        self.logger.error(f"Column '{colName}' does not exist in table.", 'columnNotExistsError')
                         return f"Column '{colName}' does not exist in table."
 
                     column = self.__columnObj[colName]
@@ -60,21 +61,23 @@ class Table(SerializedInterface, CompressInterface):
                         try:
                             colValue = int(colValue)
                         except ValueError:
-                            log.error(f"Invalid value '{colValue}' for column '{colName}'. Expected int.", 'typeError')
+                            self.logger.error(f"Invalid value '{colValue}' for column '{colName}'. Expected int.",
+                                              'typeError')
                             return f"Invalid value '{colValue}' for column '{colName}'. Expected int."
                     elif column.type == 'float':
                         try:
                             colValue = float(colValue)
                         except ValueError:
-                            log.error(f"Invalid value '{colValue}' for column '{colName}'. Expected float.",
-                                      'typeError')
+                            self.logger.error(f"Invalid value '{colValue}' for column '{colName}'. Expected float.",
+                                              'typeError')
                             return f"Invalid value '{colValue}' for column '{colName}'. Expected float."
                     elif column.type == 'str':
                         if not isinstance(colValue, str):
-                            log.error(f"Invalid value '{colValue}' for column '{colName}'. Expected str.", 'typeError')
+                            self.logger.error(f"Invalid value '{colValue}' for column '{colName}'. Expected str.",
+                                              'typeError')
                             return f"Invalid value '{colValue}' for column '{colName}'. Expected str."
                     else:
-                        log.error(f"Unsupported data type '{column.type}' for column '{colName}'", 'typeError')
+                        self.logger.error(f"Unsupported data type '{column.type}' for column '{colName}'", 'typeError')
                         return f"Unsupported data type '{column.type}' for column '{colName}'"
 
                     rowValues[colName] = colValue
@@ -111,7 +114,7 @@ class Table(SerializedInterface, CompressInterface):
             elif operator == '>=':
                 return lambda row: row.getValue(column) >= value
             else:
-                log.error(f"Unsupported operator: {operator}.", 'valueError')
+                self.logger.error(f"Unsupported operator: {operator}.", 'valueError')
                 return f"Unsupported operator: {operator}."
 
         if not condition:
@@ -130,7 +133,7 @@ class Table(SerializedInterface, CompressInterface):
             elif operator.lower() == 'or':
                 return lambda row: left(row) or right(row)
             else:
-                log.error(f"Unsupported logical operator: {operator}.", 'valueError')
+                self.logger.error(f"Unsupported logical operator: {operator}.", 'valueError')
                 return f"Unsupported logical operator: {operator}."
 
         return combineConditions(condition)

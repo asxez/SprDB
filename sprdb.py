@@ -6,8 +6,11 @@
 
 import sys
 
+from common.log import Logger, curdir
 from parser import parser
 from server.serve import startupServe, destartupServe
+
+logger = Logger(logDir=f'{curdir}/logs/local')
 
 
 def local():
@@ -36,9 +39,9 @@ def local():
             for help in helps:
                 print(help)
             continue
-        syntax = parser.SyntaxParser(statement).parse()
+        syntax = parser.SyntaxParser(statement, logger).parse()
         try:
-            parser.SemanticParser().main(syntax)
+            parser.SemanticParser(logger).main(syntax)
         except:
             pass
 

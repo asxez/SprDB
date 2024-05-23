@@ -10,7 +10,7 @@ from typing import Any, List, Optional
 class SerializedInterface:
     """序列化接口"""
 
-    def serialized(self, data):
+    def serialized(self):
         """序列化表数据"""
         ...
 

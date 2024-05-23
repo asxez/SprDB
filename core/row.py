@@ -8,11 +8,12 @@
 import pickle
 
 from typing import Any, Dict
+from .core import SerializedInterface
 
 
-class Row:
-    def __init__(self):
-        self.values: Dict[str, Any] = {} # 值
+class Row(SerializedInterface):
+    def __init__(self, ):
+        self.values: Dict[str, Any] = {}  # 值
 
     def setValue(self, columnName: str, value: Any) -> None:
         """存值"""

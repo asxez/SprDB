@@ -9,15 +9,17 @@ import subprocess
 import threading
 from typing import List, Dict
 
+from common import log, Logger, curdir
 from common.config import port
-from common import log
 from core import Row
 from parser import parser
 
+logger = Logger(f'{curdir}/logs/server')
+
 
 def executeQuery(statement: str) -> List[Row | Dict] | None:
-    syntax = parser.SyntaxParser(statement).parse()
-    return parser.SemanticParser().main(syntax, mode=1)
+    syntax = parser.SyntaxParser(statement, logger).parse()
+    return parser.SemanticParser(logger).main(syntax, mode=1)
 
 
 def handleClient(clientSocket: socket.socket) -> None:

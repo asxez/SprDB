@@ -9,7 +9,7 @@ import os
 from enum import Enum, auto
 from typing import Any, List, Dict, Optional
 
-from common import log, OutputTable, curdir
+from common import OutputTable, curdir, Logger
 from core import Row
 from core.database import createDatabase, useDatabase, Database
 from core.table import Table
@@ -104,7 +104,10 @@ keywordsToken: List[KeywordsToken] = [
 class LexParser:
     """词法分析器"""
 
-    def __init__(self, statement: str):
+    def __init__(self, statement: str, logger: Logger):
+        self.logger = logger
+        self.logger.info('LexParser initialized')
+
         self.curToken: Token = Token(TokenType.TOKEN_END)  # 当前token
         self.preToken: Token = Token(TokenType.TOKEN_END)  # 前一个token
         self.__sourceCode: str = statement  # 源码串
@@ -162,15 +165,15 @@ class LexParser:
                 self.__curPosition += 1
             else:
                 # 命令结束而字符串仍未结果，抛出syntaxError
-                log.error("Unterminated string.", 'syntaxError')
-                return
+                self.logger.error("Unterminated string.", 'syntaxError')
+                return "Unterminated string."
             self.curToken.tokenType = TokenType.TOKEN_STRING
             self.curToken.length = len(string)
             self.curToken.value = string
 
         # 数字，字符串，关键字之外的错误类型
         else:
-            log.error("An error occurred while parsing the token.", 'typeError')
+            self.logger.error("An error occurred while parsing the token.", 'typeError')
             return "An error occurred while parsing the token."
 
     def getNextToken(self) -> None:
@@ -254,11 +257,14 @@ class LexParser:
 class SyntaxParser:
     """语法分析器"""
 
-    def __init__(self, statement: str):
-        self.__lexParser: LexParser = LexParser(statement)
+    def __init__(self, statement: str, logger: Logger):
+        self.logger = logger
+        self.logger.info('SyntaxParser initialized')
+        self.__lexParser: LexParser = LexParser(statement, self.logger)
 
     def parse(self):
         """启动语法分析器"""
+        self.logger.info('Starting syntax parse...')
         self.__lexParser.getNextToken()
         if self.__lexParser.curToken.tokenType == TokenType.TOKEN_CREATE:
             return self.__parseCreate()
@@ -273,7 +279,7 @@ class SyntaxParser:
         elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_USE:
             return self.__parseUse()
         else:
-            log.error('Syntax is error.', 'syntaxError')
+            self.logger.error('Syntax is error.', 'syntaxError')
             return 'Syntax is error.'
 
     def __parseCreate(self) -> Dict[str, Dict[str, Any]] | str:
@@ -281,7 +287,7 @@ class SyntaxParser:
         self.__lexParser.getNextToken()  # 跳过create
         curToken = self.__lexParser.curToken
         if curToken.tokenType != TokenType.TOKEN_TABLE and curToken.tokenType != TokenType.TOKEN_DATABASE:
-            log.error(f'Expect "table" or "database" after "{self.__lexParser.preToken.value}".', 'syntaxError')
+            self.logger.error(f'Expect "table" or "database" after "{self.__lexParser.preToken.value}".', 'syntaxError')
             return f'Expect "table" or "database" after "{self.__lexParser.preToken.value}".'
 
         # create database [databaseName]
@@ -304,13 +310,13 @@ class SyntaxParser:
 
             self.__lexParser.getNextToken()
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:  # 未定义表名，抛出syntaxError
-                log.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
+                self.logger.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
                 return f'Expect table name after "{self.__lexParser.preToken.value}".'
             syntaxTreeTable['CREATE_TABLE']['tableName'] = self.__lexParser.curToken.value
 
             self.__lexParser.getNextToken()
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_LEFT_PAREN:
-                log.error(f'Expected "(" after "{self.__lexParser.preToken.value}".', 'syntaxError')
+                self.logger.error(f'Expected "(" after "{self.__lexParser.preToken.value}".', 'syntaxError')
                 return f'Expected "(" after "{self.__lexParser.preToken.value}".'
 
             # 死循环读入表列及列类型
@@ -321,7 +327,8 @@ class SyntaxParser:
 
                 # 取得列名
                 if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
-                    log.error(f'Expected column name but it is "{self.__lexParser.curToken.value}".', 'syntaxError')
+                    self.logger.error(f'Expected column name but it is "{self.__lexParser.curToken.value}".',
+                                      'syntaxError')
                     return f'Expected column name but it is "{self.__lexParser.curToken.value}".'
                 column_name = self.__lexParser.curToken.value
 
@@ -329,8 +336,8 @@ class SyntaxParser:
                 self.__lexParser.getNextToken()
                 token = self.__lexParser.curToken
                 if token.tokenType != TokenType.TOKEN_INT and token.tokenType != TokenType.TOKEN_STR and token.tokenType != TokenType.TOKEN_FLOAT:
-                    log.error(f'Expected data type for column but it is "{self.__lexParser.curToken.value}".',
-                              'syntaxError')
+                    self.logger.error(f'Expected data type for column but it is "{self.__lexParser.curToken.value}".',
+                                      'syntaxError')
                     return f'Expected data type for column but it is "{self.__lexParser.curToken.value}".'
                 data_type = self.__lexParser.curToken.value
 
@@ -342,12 +349,12 @@ class SyntaxParser:
                 elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_RIGHT_PAREN:  # 结束
                     break
                 else:
-                    log.error(f'unexpected token:{self.__lexParser.curToken.value}.', 'syntaxError')
+                    self.logger.error(f'unexpected token:{self.__lexParser.curToken.value}.', 'syntaxError')
                     return f'Unexpected token:{self.__lexParser.curToken.value}.'
 
             # 不允许空列
             if not syntaxTreeTable['CREATE_TABLE']['columns']:
-                log.error('Empty column definition.', 'syntaxError')
+                self.logger.error('Empty column definition.', 'syntaxError')
                 return 'Empty column definition.'
 
             return syntaxTreeTable
@@ -370,7 +377,8 @@ class SyntaxParser:
                 curToken = self.__lexParser.curToken
                 if curToken.tokenType not in [TokenType.TOKEN_EQUAL, TokenType.TOKEN_MORE, TokenType.TOKEN_MORE_EQUAL,
                                               TokenType.TOKEN_LESS, TokenType.TOKEN_LESS_EQUAL]:
-                    log.error(f'Expect comparison operator after "{self.__lexParser.preToken.value}".', 'syntaxError')
+                    self.logger.error(f'Expect comparison operator after "{self.__lexParser.preToken.value}".',
+                                      'syntaxError')
                     return f'Expect comparison operator after "{self.__lexParser.preToken.value}".'
                 operator = curToken.value
 
@@ -378,8 +386,8 @@ class SyntaxParser:
                 self.__lexParser.getNextToken()
                 curToken = self.__lexParser.curToken
                 if curToken.tokenType != TokenType.TOKEN_STRING and curToken.tokenType != TokenType.TOKEN_NUM:
-                    log.error(f'Expect value type string or number after "{self.__lexParser.preToken.value}".',
-                              'typeError')
+                    self.logger.error(f'Expect value type string or number after "{self.__lexParser.preToken.value}".',
+                                      'typeError')
                     return f'Expect value type string or number after "{self.__lexParser.preToken.value}".'
                 value = curToken.value
                 expression.append((column, operator, value))
@@ -407,7 +415,7 @@ class SyntaxParser:
         elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_END:
             return expression  # 返回整个表达式
         else:
-            log.error(f'Unexpected token after expression:{self.__lexParser.curToken.value}', 'syntaxError')
+            self.logger.error(f'Unexpected token after expression:{self.__lexParser.curToken.value}', 'syntaxError')
             return f'Unexpected token after expression:{self.__lexParser.curToken.value}'
 
     def __parseSelect(self) -> Dict[str, Dict[str, Any]] | str:
@@ -415,7 +423,7 @@ class SyntaxParser:
         self.__lexParser.getNextToken()  # 跳过select
         curToken = self.__lexParser.curToken
         if curToken.tokenType != TokenType.TOKEN_ID and curToken.tokenType != TokenType.TOKEN_STAR:
-            log.error(f'Expect "*" or column name after {self.__lexParser.preToken.value}.', 'syntaxError')
+            self.logger.error(f'Expect "*" or column name after {self.__lexParser.preToken.value}.', 'syntaxError')
             return f'Expect "*" or column name after {self.__lexParser.preToken.value}.'
 
         columns = []
@@ -430,7 +438,7 @@ class SyntaxParser:
                     break
                 self.__lexParser.getNextToken()
                 if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
-                    log.error('Expect column name after ",".', 'syntaxError')
+                    self.logger.error('Expect column name after ",".', 'syntaxError')
                     return 'Expect column name after ",".'
 
         syntaxTree = {
@@ -443,12 +451,12 @@ class SyntaxParser:
 
         # 解析from
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_FROM:
-            log.error('Expect "from" after column list.', 'syntaxError')
+            self.logger.error('Expect "from" after column list.', 'syntaxError')
             return 'Expect "from" after column list.'
 
         self.__lexParser.getNextToken()
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
-            log.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
+            self.logger.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
             return f'Expect table name after "{self.__lexParser.preToken.value}".'
 
         syntaxTree['SELECT']['from'] = self.__lexParser.curToken.value  # 表名
@@ -465,12 +473,12 @@ class SyntaxParser:
         """解析insert命令"""
         self.__lexParser.getNextToken()  # 跳过insert
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_INTO:
-            log.error(f'Expect "into" after "{self.__lexParser.preToken.value}".', 'syntaxError')
+            self.logger.error(f'Expect "into" after "{self.__lexParser.preToken.value}".', 'syntaxError')
             return f'Expect "into" after "{self.__lexParser.preToken.value}".'
 
         self.__lexParser.getNextToken()
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
-            log.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
+            self.logger.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
             return f'Expect table name after "{self.__lexParser.preToken.value}".'
 
         syntaxTree = {
@@ -487,7 +495,7 @@ class SyntaxParser:
 
             self.__lexParser.getNextToken()  # 跳过values
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_LEFT_PAREN:
-                log.error(f'Expect "(" after "{self.__lexParser.preToken.value}".', 'syntaxError')
+                self.logger.error(f'Expect "(" after "{self.__lexParser.preToken.value}".', 'syntaxError')
                 return f'Expect "(" after "{self.__lexParser.preToken.value}".'
             while True:
                 syntaxTree['INSERT']['values'].append(self.__parseValues())
@@ -499,7 +507,7 @@ class SyntaxParser:
                 elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_END:
                     break
                 else:
-                    log.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
+                    self.logger.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
                     return f'Unexpect token:{self.__lexParser.curToken.value}.'
 
             return syntaxTree
@@ -508,7 +516,7 @@ class SyntaxParser:
             self.__lexParser.getNextToken()  # 跳过左括号
             while True:
                 if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
-                    log.error('Expect column after "(".', 'syntaxError')
+                    self.logger.error('Expect column after "(".', 'syntaxError')
                     return 'Expect column after "(".'
                 syntaxTree['INSERT']['columns'].append(self.__lexParser.curToken.value)
                 self.__lexParser.getNextToken()
@@ -518,17 +526,17 @@ class SyntaxParser:
                 elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_RIGHT_PAREN:
                     break
                 else:
-                    log.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
+                    self.logger.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
                     return f'Unexpect token:{self.__lexParser.curToken.value}.'
 
             self.__lexParser.getNextToken()  # 获取values
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_VALUES:
-                log.error('Expect "values" after columns list.', 'syntaxError')
+                self.logger.error('Expect "values" after columns list.', 'syntaxError')
                 return 'Expect "values" after columns list.'
 
             self.__lexParser.getNextToken()  # 跳过values
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_LEFT_PAREN:
-                log.error(f'Expect "(" after "{self.__lexParser.preToken.value}".', 'syntaxError')
+                self.logger.error(f'Expect "(" after "{self.__lexParser.preToken.value}".', 'syntaxError')
                 return f'Expect "(" after "{self.__lexParser.preToken.value}".'
             while True:
                 syntaxTree['INSERT']['values'].append(self.__parseValues())
@@ -540,21 +548,21 @@ class SyntaxParser:
                 elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_END:
                     break
                 else:
-                    log.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
+                    self.logger.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
                     return f'Unexpect token:{self.__lexParser.curToken.value}.'
 
             return syntaxTree
 
     def __parseValues(self):
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_LEFT_PAREN:
-            log.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
+            self.logger.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
             return f'Unexpect token:{self.__lexParser.curToken.value}.'
 
         self.__lexParser.getNextToken()  # 跳过左括号
         values = []
         while True:
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_NUM and self.__lexParser.curToken.tokenType != TokenType.TOKEN_STRING:
-                log.error(f'Unexpect type:{self.__lexParser.curToken.value}.', 'typeError')
+                self.logger.error(f'Unexpect type:{self.__lexParser.curToken.value}.', 'typeError')
                 return f'Unexpect type:{self.__lexParser.curToken.value}.'
             values.append(self.__lexParser.curToken.value)
 
@@ -565,7 +573,7 @@ class SyntaxParser:
             elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_RIGHT_PAREN:
                 break
             else:
-                log.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
+                self.logger.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
                 return f'Unexpect token:{self.__lexParser.curToken.value}.'
 
         return values
@@ -574,7 +582,7 @@ class SyntaxParser:
         """解析update命令"""
         self.__lexParser.getNextToken()  # 跳过update
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
-            log.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
+            self.logger.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
             return f'Expect table name after "{self.__lexParser.preToken.value}".'
 
         syntaxTree = {
@@ -588,24 +596,24 @@ class SyntaxParser:
 
         self.__lexParser.getNextToken()  # set
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_SET:
-            log.error('Expect "set" after table name.', 'syntaxError')
+            self.logger.error('Expect "set" after table name.', 'syntaxError')
             return 'Expect "set" after table name.'
 
         self.__lexParser.getNextToken()  # 跳过set，后面应该是column name
         while True:
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
-                log.error('Expect column name.', 'syntaxError')
+                self.logger.error('Expect column name.', 'syntaxError')
                 return 'Expect column name.'
             column = self.__lexParser.curToken.value
 
             self.__lexParser.getNextToken()
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_EQUAL:
-                log.error('Expect "=" after column name.', 'syntaxError')
+                self.logger.error('Expect "=" after column name.', 'syntaxError')
                 return 'Expect "=" after column name.'
 
             self.__lexParser.getNextToken()
             if self.__lexParser.curToken.tokenType != TokenType.TOKEN_NUM and self.__lexParser.curToken.tokenType != TokenType.TOKEN_STRING:
-                log.error(f'Unexpect value type:{self.__lexParser.curToken.value}.', 'typeError')
+                self.logger.error(f'Unexpect value type:{self.__lexParser.curToken.value}.', 'typeError')
                 return f'Unexpect value type:{self.__lexParser.curToken.value}.'
             value = self.__lexParser.curToken.value
             syntaxTree['UPDATE']['set'].append((column, value))
@@ -617,7 +625,7 @@ class SyntaxParser:
             elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_WHERE or self.__lexParser.curToken.tokenType == TokenType.TOKEN_END:
                 break
             else:
-                log.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
+                self.logger.error(f'Unexpect token:{self.__lexParser.curToken.value}.', 'syntaxError')
                 return f'Unexpect token:{self.__lexParser.curToken.value}.'
 
                 # 解析where子句
@@ -630,12 +638,12 @@ class SyntaxParser:
         """解析delete命令"""
         self.__lexParser.getNextToken()  # 跳过delete
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_FROM:
-            log.error(f'Expect "from" after "{self.__lexParser.preToken.value}".', 'syntaxError')
+            self.logger.error(f'Expect "from" after "{self.__lexParser.preToken.value}".', 'syntaxError')
             return f'Expect "from" after "{self.__lexParser.preToken.value}".'
 
         self.__lexParser.getNextToken()
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
-            log.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
+            self.logger.error(f'Expect table name after "{self.__lexParser.preToken.value}".', 'syntaxError')
             return f'Expect table name after "{self.__lexParser.preToken.value}".'
 
         syntaxTree = {
@@ -655,7 +663,7 @@ class SyntaxParser:
         """解析use命令"""
         self.__lexParser.getNextToken()  # 跳过use
         if self.__lexParser.curToken.tokenType != TokenType.TOKEN_ID:
-            log.error(f'Expect database name after "{self.__lexParser.preToken.value}".', 'syntaxError')
+            self.logger.error(f'Expect database name after "{self.__lexParser.preToken.value}".', 'syntaxError')
             return f'Expect database name after "{self.__lexParser.preToken.value}".'
         return {
             'USE': {
@@ -664,7 +672,6 @@ class SyntaxParser:
         }
 
 
-# 若系统数据库不存在则创建
 if not os.path.exists(f'{curdir}/data/sprdb'):
     createDatabase('sprdb')
 thisDatabase: Database = Database('sprdb')  # 默认
@@ -673,6 +680,10 @@ thisDatabase: Database = Database('sprdb')  # 默认
 class SemanticParser:
     """语义分析器"""
 
+    def __init__(self, logger: Logger):
+        self.logger = logger
+        logger.info('SemanticParser initialized')
+
     @staticmethod
     def writeNewData(tableName: str, table: Table) -> None:
         """为表写入新数据"""
@@ -680,10 +691,9 @@ class SemanticParser:
             data = table.compress(table.serialized())
             file.write(data)
 
-    @staticmethod
-    def exists(path: str):
+    def exists(self, path: str):
         if not os.path.exists(path):
-            log.error(f'There is no such {path}.', 'pathNotExists')
+            self.logger.error(f'There is no such {path}.', 'pathNotExists')
             return f'There is no such {path}.'
 
     def main(self, syntax: Dict[str, Dict], mode=0) -> List[Row | Dict] | None | str:
@@ -705,7 +715,7 @@ class SemanticParser:
             ...
 
         elif 'USE' in syntax:  # 切换数据库
-            thisDatabase = useDatabase(syntax['USE']['databaseName'])
+            thisDatabase = useDatabase(syntax['USE']['databaseName'], self.logger)
 
         elif 'INSERT' in syntax:  # 插入数据
             insertInfo = syntax['INSERT']
@@ -715,7 +725,7 @@ class SemanticParser:
             table = Table(tableName)
 
             if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                log.error('There is no such table.', 'pathNotExists')
+                self.logger.error('There is no such table.', 'pathNotExists')
                 return 'There is no such table.'
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
@@ -733,7 +743,7 @@ class SemanticParser:
             table = Table(tableName)
 
             if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                log.error('There is no such table.', 'tableNotExists')
+                self.logger.error('There is no such table.', 'tableNotExists')
                 return 'There is no such table.'
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
@@ -756,7 +766,7 @@ class SemanticParser:
             table = Table(tableName)
 
             if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                log.error('There is no such table.', 'pathNotExists')
+                self.logger.error('There is no such table.', 'pathNotExists')
                 return 'There is no such table.'
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
@@ -774,7 +784,7 @@ class SemanticParser:
             table = Table(tableName)
 
             if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                log.error('There is no such table.', 'pathNotExists')
+                self.logger.error('There is no such table.', 'pathNotExists')
                 return 'There is no such table.'
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
@@ -787,5 +797,5 @@ class SemanticParser:
             self.writeNewData(tableName, table)
 
         else:
-            log.error('There is no such command.', 'syntaxError')
+            self.logger.error('There is no such command.', 'syntaxError')
             return 'There is no such command.'

@@ -9,7 +9,7 @@ import os
 import shutil
 from typing import List, Tuple
 
-from common import log, curdir
+from common import curdir, Logger, log
 from .core import SerializedInterface, CompressInterface
 from .table import Table
 
@@ -71,9 +71,9 @@ def dropDatabase(databaseName: str) -> None:
     shutil.rmtree(databaseName)
 
 
-def useDatabase(databaseName: str) -> Database | str:
+def useDatabase(databaseName: str, logger: Logger) -> Database | str:
     """切换数据库"""
     if os.path.exists(f'{curdir}/data/{databaseName}'):
         return Database(databaseName)
-    log.error('There is no such database.', 'databaseNotExistsError')
+    logger.error('There is no such database.', 'databaseNotExistsError')
     return 'There is no such database.'

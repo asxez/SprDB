@@ -8,9 +8,9 @@ import pickle
 from typing import List
 
 from .row import Row
+from .core import SerializedInterface
 
-
-class Page:
+class Page(SerializedInterface):
     """页结构"""
 
     def __init__(self):
