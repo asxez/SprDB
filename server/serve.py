@@ -53,8 +53,8 @@ def startServer(host='0.0.0.0', port=port) -> None:
 
 def startupServe():
     """设置开机自启动"""
-    commandService = ['nssm.exe', 'install', 'sprserve', 'sprserve.exe']
-    result = subprocess.run(commandService, capture_output=True, text=True, encoding='gbk')
+    command = ['nssm.exe', 'install', 'sprserve', 'sprserve.exe']
+    result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
         log.error('Failed to set auto-start.', 'systemError')
         return
@@ -70,3 +70,13 @@ def startupServe():
         else:
             log.warning('Please input yes or no.')
             continue
+
+
+def destartupServe():
+    """取消自启动"""
+    command = ['nssm.exe', 'remove', 'sprserve']
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        log.error('Failed to set destartup-auto.', 'systemError')
+        return
+    log.info('Success.')
