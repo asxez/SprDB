@@ -701,12 +701,14 @@ class SemanticParser:
         global thisDatabase
         if 'CREATE_DATABASE' in syntax:  # 创建数据库
             dbInfo = syntax['CREATE_DATABASE']
-            createDatabase(dbInfo['databaseName'])
+            result = createDatabase(dbInfo['databaseName'])
             thisDatabase = Database(dbInfo['databaseName'])
+            return result
 
         elif 'CREATE_TABLE' in syntax:  # 创建表
             tableInfo = syntax['CREATE_TABLE']
-            thisDatabase.createTable(tableInfo['tableName'], tableInfo['columns'])
+            result = thisDatabase.createTable(tableInfo['tableName'], tableInfo['columns'])
+            return result
 
         elif 'DROP_DATABASE' in syntax:
             ...
@@ -716,6 +718,8 @@ class SemanticParser:
 
         elif 'USE' in syntax:  # 切换数据库
             thisDatabase = useDatabase(syntax['USE']['databaseName'], self.logger)
+            if isinstance(thisDatabase, str):
+                return thisDatabase
 
         elif 'INSERT' in syntax:  # 插入数据
             insertInfo = syntax['INSERT']
@@ -733,9 +737,9 @@ class SemanticParser:
                 data = table.decompress(data)
 
             table.deserialized(data)
-            table.insert(columns, values)
-
+            result = table.insert(columns, values)
             self.writeNewData(tableName, table)
+            return result
 
         elif 'SELECT' in syntax:  # 查询
             selectInfo = syntax['SELECT']
@@ -775,7 +779,6 @@ class SemanticParser:
 
             table.deserialized(data)
             table.update(updateInfo)
-
             self.writeNewData(tableName, table)
 
         elif 'DELETE' in syntax:  # 删除
