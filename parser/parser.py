@@ -39,6 +39,7 @@ class TokenType(Enum):
     TOKEN_BOOL = auto()  # bool
     TOKEN_NULL = auto()  # null
     TOKEN_USE = auto()  # use
+    TOKEN_DROP = auto # drop
 
     TOKEN_MORE = auto()  # >
     TOKEN_MORE_EQUAL = auto()  # >=
@@ -97,7 +98,8 @@ keywordsToken: List[KeywordsToken] = [
     KeywordsToken("INT", TokenType.TOKEN_INT),
     KeywordsToken("FLOAT", TokenType.TOKEN_FLOAT),
     KeywordsToken("BOOL", TokenType.TOKEN_BOOL),
-    KeywordsToken('USE', TokenType.TOKEN_USE),
+    KeywordsToken("USE", TokenType.TOKEN_USE),
+    KeywordsToken("DROP", TokenType.TOKEN_DROP),
 ]
 
 
@@ -278,6 +280,8 @@ class SyntaxParser:
             return self.__parseDelete()
         elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_USE:
             return self.__parseUse()
+        elif self.__lexParser.curToken.tokenType == TokenType.TOKEN_DROP:
+            return self.__parseDrop()
         else:
             self.logger.error('Syntax is error.', 'syntaxError')
             return 'Syntax is error.'
@@ -670,6 +674,10 @@ class SyntaxParser:
                 'databaseName': self.__lexParser.curToken.value
             }
         }
+
+    def __parseDrop(self):
+        """解析drop命令"""
+        ...
 
 
 if not os.path.exists(f'{curdir}/data/sprdb'):
