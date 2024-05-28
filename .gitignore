@@ -1,6 +1,5 @@
 .idea
 *.spec
 build
-dist
 qodana.yaml
 venv
