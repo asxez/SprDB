@@ -8,9 +8,11 @@
 this is a test file.
 """
 
-from common import log, OutputTable
+from common import log, OutputTable, Logger, curdir
 from core import Table, createDatabase
 from parser import parser
+
+logger = Logger(f'{curdir}/logs/test')
 
 
 def testLog():
@@ -27,10 +29,12 @@ def testLexParser():
              "insert into t values (1,2,3), (2,3,4)",
              "update t set a=1,b=2 where c='6'",
              "delete from t where a=1",
-             "use test"
+             "use test",
+             "drop database test",
+             'drop table test'
              ]
     for code in codes:
-        lexParser = parser.LexParser(code)
+        lexParser = parser.LexParser(code, logger)
         lexParser.getNextToken()
         while lexParser.curToken.tokenType != parser.TokenType.TOKEN_END:
             print((lexParser.curToken.value, lexParser.curToken.tokenType, lexParser.preToken.tokenType))
@@ -40,19 +44,23 @@ def testLexParser():
 
 def testSyntaxParser():
     """测试语法分析器"""
-    sparser = parser.SyntaxParser("create database a")
+    sparser = parser.SyntaxParser("create database a", logger)
     print(sparser.parse())
-    sparser = parser.SyntaxParser("create table a (a int , b str ,)")
+    sparser = parser.SyntaxParser("create table a (a int , b str ,)", logger)
     print(sparser.parse())
-    sparser = parser.SyntaxParser("select a,b from t where (c='asxe' or d=1) and e=10")
+    sparser = parser.SyntaxParser("select a,b from t where (c='asxe' or d=1) and e=10", logger)
     print(sparser.parse())
-    sparser = parser.SyntaxParser("insert into t values (1,2,3), (2,3,4)")
+    sparser = parser.SyntaxParser("insert into t values (1,2,3), (2,3,4)", logger)
     print(sparser.parse())
-    sparser = parser.SyntaxParser("update t set a=1,b=2 where c='6'")
+    sparser = parser.SyntaxParser("update t set a=1,b=2 where c='6'", logger)
     print(sparser.parse())
-    sparser = parser.SyntaxParser("delete from t where a=1")
+    sparser = parser.SyntaxParser("delete from t where a=1", logger)
     print(sparser.parse())
-    sparser = parser.SyntaxParser('use test')
+    sparser = parser.SyntaxParser("use test", logger)
+    print(sparser.parse())
+    sparser = parser.SyntaxParser("drop database test", logger)
+    print(sparser.parse())
+    sparser = parser.SyntaxParser("drop table test", logger)
     print(sparser.parse())
 
 
@@ -82,10 +90,6 @@ def testCore():
     selectedRows = table.select({'columns': ['*'], 'from': 'a'})
     for row in selectedRows:
         print(f'delete: {row}')
-
-
-def testDatabase():
-    createDatabase('sprdb')
 
 
 def testOutPut():

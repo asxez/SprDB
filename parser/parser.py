@@ -11,7 +11,7 @@ from typing import Any, List, Dict, Optional
 
 from common import OutputTable, curdir, Logger
 from core import Row
-from core.database import createDatabase, useDatabase, Database
+from core.database import createDatabase, useDatabase, Database, dropDatabase
 from core.table import Table
 
 
@@ -39,7 +39,7 @@ class TokenType(Enum):
     TOKEN_BOOL = auto()  # bool
     TOKEN_NULL = auto()  # null
     TOKEN_USE = auto()  # use
-    TOKEN_DROP = auto # drop
+    TOKEN_DROP = auto  # drop
 
     TOKEN_MORE = auto()  # >
     TOKEN_MORE_EQUAL = auto()  # >=
@@ -675,9 +675,27 @@ class SyntaxParser:
             }
         }
 
-    def __parseDrop(self):
+    def __parseDrop(self) -> Dict[str, Dict[str, str]] | str:
         """解析drop命令"""
-        ...
+        self.__lexParser.getNextToken()  # 跳过drop
+        if self.__lexParser.curToken.tokenType == TokenType.TOKEN_DATABASE:
+            self.__lexParser.getNextToken()
+            return {
+                'DROP_DATABASE': {
+                    'databaseName': self.__lexParser.curToken.value
+                }
+            }
+
+        if self.__lexParser.curToken.tokenType == TokenType.TOKEN_TABLE:
+            self.__lexParser.getNextToken()
+            return {
+                'DROP_TABLE': {
+                    'tableName': self.__lexParser.curToken.value
+                }
+            }
+
+        self.logger.error('There is no such command.', 'syntaxError')
+        return 'There is no such command.'
 
 
 if not os.path.exists(f'{curdir}/data/sprdb'):
@@ -701,7 +719,7 @@ class SemanticParser:
 
     def exists(self, path: str):
         if not os.path.exists(path):
-            self.logger.error(f'There is no such {path}.', 'pathNotExists')
+            self.logger.error(f'There is no such {path}.', 'pathNotExistsError')
             return f'There is no such {path}.'
 
     def main(self, syntax: Dict[str, Dict], mode=0) -> List[Row | Dict] | None | str:
@@ -711,7 +729,9 @@ class SemanticParser:
             dbInfo = syntax['CREATE_DATABASE']
             result = createDatabase(dbInfo['databaseName'])
             thisDatabase = Database(dbInfo['databaseName'])
-            return result
+            if isinstance(result, str):
+                return result
+            return 'true'
 
         elif 'CREATE_TABLE' in syntax:  # 创建表
             tableInfo = syntax['CREATE_TABLE']
@@ -719,15 +739,20 @@ class SemanticParser:
             return result
 
         elif 'DROP_DATABASE' in syntax:
-            ...
+            dropInfo = syntax['DROP_DATABASE']
+            result = dropDatabase(dropInfo['databaseName'], self.logger)
+            return result
 
         elif 'DROP_TABLE' in syntax:
-            ...
+            dropInfo = syntax['DROP_TABLE']
+            result = thisDatabase.dropTable(dropInfo['tableName'], self.logger)
+            return result
 
         elif 'USE' in syntax:  # 切换数据库
             thisDatabase = useDatabase(syntax['USE']['databaseName'], self.logger)
             if isinstance(thisDatabase, str):
                 return thisDatabase
+            return 'true'
 
         elif 'INSERT' in syntax:  # 插入数据
             insertInfo = syntax['INSERT']
@@ -737,7 +762,7 @@ class SemanticParser:
             table = Table(tableName)
 
             if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                self.logger.error('There is no such table.', 'pathNotExists')
+                self.logger.error('There is no such table.', 'tableNotExistsError')
                 return 'There is no such table.'
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
@@ -755,7 +780,7 @@ class SemanticParser:
             table = Table(tableName)
 
             if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                self.logger.error('There is no such table.', 'tableNotExists')
+                self.logger.error('There is no such table.', 'tableNotExistsError')
                 return 'There is no such table.'
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
@@ -778,7 +803,7 @@ class SemanticParser:
             table = Table(tableName)
 
             if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                self.logger.error('There is no such table.', 'pathNotExists')
+                self.logger.error('There is no such table.', 'tableNotExistsError')
                 return 'There is no such table.'
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
@@ -795,7 +820,7 @@ class SemanticParser:
             table = Table(tableName)
 
             if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                self.logger.error('There is no such table.', 'pathNotExists')
+                self.logger.error('There is no such table.', 'tableNotExistsError')
                 return 'There is no such table.'
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:

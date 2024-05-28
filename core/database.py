@@ -18,6 +18,7 @@ systemTableColumn = [('table', 'str')]
 
 
 class Database(SerializedInterface, CompressInterface):
+    """数据库类"""
 
     def __init__(self, name: str):
         self.name = name
@@ -47,12 +48,13 @@ class Database(SerializedInterface, CompressInterface):
             data = newTable.compress(newTable.serialized())
             file.write(data)
 
-    def dropTable(self, name: str) -> str:
+    def dropTable(self, name: str, logger: Logger) -> str:
         """删除表"""
         if not os.path.exists(f'{curdir}/data/{self.name}/{name}.db'):
-            log.error('Table not exists.', 'tableNotExistsError')
-            return 'Table not exists.'
+            logger.error('There is no such table.', 'tableNotExistsError')
+            return 'There is no such table.'
         os.remove(f'{name}.db')
+        return 'true'
 
 
 def createDatabase(databaseName: str) -> Database | str:
@@ -66,9 +68,13 @@ def createDatabase(databaseName: str) -> Database | str:
     return Database(databaseName)
 
 
-def dropDatabase(databaseName: str) -> None:
+def dropDatabase(databaseName: str, logger: Logger) -> str:
     """删除数据库"""
-    shutil.rmtree(databaseName)
+    if not os.path.exists(f'{curdir}/data/{databaseName}'):
+        logger.error('There is no such database.', 'databaseNotExistsError')
+        return 'There is no such database.'
+    shutil.rmtree(f'{curdir}/data/{databaseName}')
+    return 'true'
 
 
 def useDatabase(databaseName: str, logger: Logger) -> Database | str:
