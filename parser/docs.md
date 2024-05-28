@@ -1,5 +1,5 @@
 ```python
-createDatabase = {
+createDatabaseTree = {
     "CREATE_DATABASE": {
         "databaseName": '',
     }
@@ -40,6 +40,18 @@ deleteTree = {
     "DELETE": {
         "table": '',  # 目标数据表
         "where": []  # WHERE 子句的条件表达式
+    }
+}
+
+dropDatabaseTree = {
+    "DROP_DATABASE": {
+        "databaseName": ''
+    }
+}
+
+dropTableTree = {
+    "DROP_TABLE": {
+        "tableName": ''
     }
 }
 
