@@ -1,6 +1,6 @@
 # SprDB
 
-<a src='./ReadMe_ZH.md'>中文文档</a>
+<a src='https://github.com/asxez/SprDB/blob/master/ReadMe_ZH.md'>中文文档</a>
 
 SprDB is a relational database based on Python.
 
