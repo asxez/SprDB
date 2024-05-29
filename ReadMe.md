@@ -2,7 +2,7 @@
 
 SprDB is a relational database based on Python.
 
-## Build Instructions
+## 🛠️ Build Instructions
 on Windows:
 ```bash
 make w
@@ -15,7 +15,7 @@ make l
 
 Then you will get a `dist` folder with an executable file that can be run by double-clicking or using the terminal command.
 
-## ✨Grammar
+## ✨ Grammar
 use < database >
 
 create database < database >
@@ -40,5 +40,5 @@ exit  --Exit the command line
 help  --Check out Help
 ```
 
-## LICENSE
+## 👁️ LICENSE
 For details, see the license file。

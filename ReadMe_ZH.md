@@ -2,7 +2,7 @@
 
 SprDB 是一门基于Python的关系型数据库。
 
-## 🛠️构建说明
+## 🛠️ 构建说明
 Windows上:
 ```bash
 make w
@@ -14,7 +14,7 @@ make l
 ```
 然后你就可以得到一个`dist`文件夹，并且包含了一个可执行文件，双击或者终端使用命令即可运行。
 
-## ✨语法结构
+## ✨ 语法结构
 use < database >
 
 create database < database >
@@ -39,5 +39,5 @@ exit  --退出命令行
 help  --查看帮助
 ```
 
-## 许可证
+## 👁️ 许可证
 详见LICENSE。
