@@ -42,5 +42,19 @@ exit  --Exit the command line
 help  --Check out Help
 ```
 
+On the client, you can connect using the following code:
+
+Download the library first:：
+```cmd
+pip install sprdbclient
+```
+then:
+```python
+from sprdbclient import SprClient
+
+with SprClient() as client:
+    client.execute('create database test')
+```
+
 ## 👁️ LICENSE
 For details, see the license file。

@@ -39,5 +39,19 @@ exit  --退出命令行
 help  --查看帮助
 ```
 
+在客户端，你可以使用如下代码进行连接：
+
+首先下载库：
+```cmd
+pip install sprdbclient
+```
+然后：
+```python
+from sprdbclient import SprClient
+
+with SprClient() as client:
+    client.execute('create database test')
+```
+
 ## 👁️ 许可证
 详见LICENSE。
