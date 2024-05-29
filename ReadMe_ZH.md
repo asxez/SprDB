@@ -15,6 +15,7 @@ make l
 然后你就可以得到一个`dist`文件夹，并且包含了一个可执行文件，双击或者终端使用命令即可运行。
 
 ## ✨ 语法结构
+```sql
 use < database >
 
 create database < database >
@@ -28,6 +29,7 @@ insert into < table >  [(column, ...)] values (...) [,(...)]
 update < table > set < column=..., ... > [where ...]
 
 delete from < table > [where ...]
+```
 
 语法与SQL语法一致，唯一不同在于列的类型，本系统仅包含三种类型，字符串类型（str），整型（int），浮点型（float）。
 

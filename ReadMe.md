@@ -18,6 +18,7 @@ make l
 Then you will get a `dist` folder with an executable file that can be run by double-clicking or using the terminal command.
 
 ## ✨ Grammar
+```sql
 use < database >
 
 create database < database >
@@ -31,6 +32,7 @@ insert into < table >  [(column, ...)] values (...) [,(...)]
 update < table > set < column=..., ... > [where ...]
 
 delete from < table > [where ...]
+```
 
 The syntax is the same as the SQL syntax, the only difference is the type of column, the SprDB only contains three types, string type (str), inter type (int), floating point type (float).
 
