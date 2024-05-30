@@ -40,10 +40,6 @@ class Table(SerializedInterface, CompressInterface):
         if columns == ['*']:  # 若是 * 则更新为所有列名
             columns = [column for column in self.__columnObj.keys()]
 
-        if len(columns) != len(rows[0]):  # 检测插入的数据与需要插入数据的列的数量是否匹配
-            self.logger.error("Number of columns doesn't match number of values.", 'valueError')
-            return "Number of columns doesn't match number of values."
-
         with self.__lock:
             for rowData in rows:
                 if len(rowData) != len(columns):

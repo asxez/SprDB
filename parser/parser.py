@@ -76,31 +76,31 @@ class KeywordsToken:
         self.tokenType = tokenType  # 关键字token类型
 
 
-keywordsToken: List[KeywordsToken] = [
-    KeywordsToken("CREATE", TokenType.TOKEN_CREATE),
-    KeywordsToken("TABLE", TokenType.TOKEN_TABLE),
-    KeywordsToken("DATABASE", TokenType.TOKEN_DATABASE),
-    KeywordsToken("SELECT", TokenType.TOKEN_SELECT),
-    KeywordsToken("DELETE", TokenType.TOKEN_DELETE),
-    KeywordsToken("FROM", TokenType.TOKEN_FROM),
-    KeywordsToken("UPDATE", TokenType.TOKEN_UPDATE),
-    KeywordsToken("INSERT", TokenType.TOKEN_INSERT),
-    KeywordsToken("INTO", TokenType.TOKEN_INTO),
-    KeywordsToken("VALUES", TokenType.TOKEN_VALUES),
-    KeywordsToken("WHERE", TokenType.TOKEN_WHERE),
-    KeywordsToken("SET", TokenType.TOKEN_SET),
-    KeywordsToken("AND", TokenType.TOKEN_LOGIC_AND),
-    KeywordsToken("OR", TokenType.TOKEN_LOGIC_OR),
-    KeywordsToken("NOT", TokenType.TOKEN_LOGIC_NOT),
-    KeywordsToken("NULL", TokenType.TOKEN_NULL),
-    KeywordsToken("IN", TokenType.TOKEN_IN),
-    KeywordsToken("STR", TokenType.TOKEN_STR),
-    KeywordsToken("INT", TokenType.TOKEN_INT),
-    KeywordsToken("FLOAT", TokenType.TOKEN_FLOAT),
-    KeywordsToken("BOOL", TokenType.TOKEN_BOOL),
-    KeywordsToken("USE", TokenType.TOKEN_USE),
-    KeywordsToken("DROP", TokenType.TOKEN_DROP),
-]
+keywordsToken: Dict[str, KeywordsToken] = {
+    "CREATE": KeywordsToken("CREATE", TokenType.TOKEN_CREATE),
+    "TABLE": KeywordsToken("TABLE", TokenType.TOKEN_TABLE),
+    "DATABASE": KeywordsToken("DATABASE", TokenType.TOKEN_DATABASE),
+    "SELECT": KeywordsToken("SELECT", TokenType.TOKEN_SELECT),
+    "DELETE": KeywordsToken("DELETE", TokenType.TOKEN_DELETE),
+    "FROM": KeywordsToken("FROM", TokenType.TOKEN_FROM),
+    "UPDATE": KeywordsToken("UPDATE", TokenType.TOKEN_UPDATE),
+    "INSERT": KeywordsToken("INSERT", TokenType.TOKEN_INSERT),
+    "INTO": KeywordsToken("INTO", TokenType.TOKEN_INTO),
+    "VALUES": KeywordsToken("VALUES", TokenType.TOKEN_VALUES),
+    "WHERE": KeywordsToken("WHERE", TokenType.TOKEN_WHERE),
+    "SET": KeywordsToken("SET", TokenType.TOKEN_SET),
+    "AND": KeywordsToken("AND", TokenType.TOKEN_LOGIC_AND),
+    "OR": KeywordsToken("OR", TokenType.TOKEN_LOGIC_OR),
+    "NOT": KeywordsToken("NOT", TokenType.TOKEN_LOGIC_NOT),
+    "NULL": KeywordsToken("NULL", TokenType.TOKEN_NULL),
+    "IN": KeywordsToken("IN", TokenType.TOKEN_IN),
+    "STR": KeywordsToken("STR", TokenType.TOKEN_STR),
+    "INT": KeywordsToken("INT", TokenType.TOKEN_INT),
+    "FLOAT": KeywordsToken("FLOAT", TokenType.TOKEN_FLOAT),
+    "BOOL": KeywordsToken("BOOL", TokenType.TOKEN_BOOL),
+    "USE": KeywordsToken("USE", TokenType.TOKEN_USE),
+    "DROP": KeywordsToken("DROP", TokenType.TOKEN_DROP),
+}
 
 
 class LexParser:
@@ -128,16 +128,15 @@ class LexParser:
                     self.__sourceCode[self.__curPosition].isalnum() or self.__sourceCode[self.__curPosition] == '_'):
                 identifier += self.__sourceCode[self.__curPosition]
                 self.__curPosition += 1
+
             upper = identifier.upper()
-            for keywordToken in keywordsToken:
-                if keywordToken.keyword.upper() == upper:
-                    self.curToken.tokenType = keywordToken.tokenType
-                    self.curToken.length = len(identifier)
-                    self.curToken.value = identifier
-                    break
+            keywordToken = keywordsToken.get(upper)
+            if keywordToken is None:
                 self.curToken.tokenType = TokenType.TOKEN_ID
-                self.curToken.length = len(identifier)
-                self.curToken.value = identifier
+            else:
+                self.curToken.tokenType = keywordToken.tokenType
+            self.curToken.length = len(identifier)
+            self.curToken.value = identifier
 
         elif self.__sourceCode[self.__curPosition].isdigit():  # 识别数字
             num = ''
