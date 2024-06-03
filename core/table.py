@@ -99,8 +99,8 @@ class Table(SerializedInterface, CompressInterface):
             column, operator, value = cond
             if operator == '=':
                 return lambda row: row.getValue(column) == value
-            # elif operator == '!=':
-            #     return lambda row: row.getValue(column) != value
+            elif operator == '!=':
+                return lambda row: row.getValue(column) != value
             elif operator == '<':
                 return lambda row: row.getValue(column) < value
             elif operator == '<=':

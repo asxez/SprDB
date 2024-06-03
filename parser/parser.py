@@ -53,6 +53,7 @@ class TokenType(Enum):
     TOKEN_EQUAL = auto()  # =
     TOKEN_END = auto()  # ;
     TOKEN_QUO = auto()  # '
+    TOKEN_NOT_EQUAL = auto()  # !=
 
     TOKEN_NUM = auto()  # 数字类型
     TOKEN_STRING = auto()  # 字符串类型
@@ -250,6 +251,15 @@ class LexParser:
                     self.curToken.value = ';'
                     self.__curPosition += 1
                     break
+                case '!':
+                    if self.__sourceCode[self.__curPosition + 1] == '=':
+                        self.curToken.tokenType = TokenType.TOKEN_NOT_EQUAL
+                        self.curToken.length = 2
+                        self.curToken.value = '!='
+                        self.__curPosition += 2
+                    else:
+                        self.logger.error('Expect "=" after "!"', 'syntaxError')
+                    break
                 case _:
                     self.__parseAnother()
                     break
@@ -379,7 +389,8 @@ class SyntaxParser:
                 self.__lexParser.getNextToken()
                 curToken = self.__lexParser.curToken
                 if curToken.tokenType not in [TokenType.TOKEN_EQUAL, TokenType.TOKEN_MORE, TokenType.TOKEN_MORE_EQUAL,
-                                              TokenType.TOKEN_LESS, TokenType.TOKEN_LESS_EQUAL]:
+                                              TokenType.TOKEN_LESS, TokenType.TOKEN_LESS_EQUAL,
+                                              TokenType.TOKEN_NOT_EQUAL]:
                     self.logger.error(f'Expect comparison operator after "{self.__lexParser.preToken.value}".',
                                       'syntaxError')
                     return f'Expect comparison operator after "{self.__lexParser.preToken.value}".'
