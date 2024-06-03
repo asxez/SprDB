@@ -729,8 +729,8 @@ class SemanticParser:
 
     def exists(self, path: str):
         if not os.path.exists(path):
-            self.logger.error(f'There is no such {path}.', 'pathNotExistsError')
-            return f'There is no such {path}.'
+            self.logger.error('There is no such object.', 'objectNotExistsError')
+            return f'There is no such object.'
 
     def main(self, syntax: Dict[str, Dict], mode=0) -> List[Row | Dict] | None | str:
         """入口"""
@@ -771,9 +771,7 @@ class SemanticParser:
             columns = insertInfo['columns']
             table = Table(tableName)
 
-            if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                self.logger.error('There is no such table.', 'tableNotExistsError')
-                return 'There is no such table.'
+            self.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db')
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
                 data = file.read()
@@ -789,9 +787,7 @@ class SemanticParser:
             tableName = selectInfo['from']
             table = Table(tableName)
 
-            if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                self.logger.error('There is no such table.', 'tableNotExistsError')
-                return 'There is no such table.'
+            self.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db')
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
                 data = file.read()
@@ -812,9 +808,7 @@ class SemanticParser:
             tableName = updateInfo['table']
             table = Table(tableName)
 
-            if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                self.logger.error('There is no such table.', 'tableNotExistsError')
-                return 'There is no such table.'
+            self.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db')
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
                 data = file.read()
@@ -829,9 +823,7 @@ class SemanticParser:
             tableName = deleteInfo['table']
             table = Table(tableName)
 
-            if not os.path.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db'):
-                self.logger.error('There is no such table.', 'tableNotExistsError')
-                return 'There is no such table.'
+            self.exists(f'{curdir}/data/{thisDatabase.name}/{tableName}.db')
 
             with lzma.open(f'{curdir}/data/{thisDatabase.name}/{tableName}.db', 'rb') as file:
                 data = file.read()

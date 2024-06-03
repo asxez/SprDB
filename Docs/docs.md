@@ -23,6 +23,6 @@ delete from < table > [where ...]
 - tableNotExists
 - columnNotExistsError
 - valueError
-- pathNotExistsError
+- objectNotExistsError
 - systemError
 - 
