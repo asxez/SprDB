@@ -53,7 +53,7 @@ class Database(SerializedInterface, CompressInterface):
         if not os.path.exists(f'{curdir}/data/{self.name}/{name}.db'):
             logger.error('There is no such table.', 'tableNotExistsError')
             return 'There is no such table.'
-        os.remove(f'{name}.db')
+        os.remove(f'{curdir}/data/{self.name}/{name}.db')
         return 'true'
 
 
